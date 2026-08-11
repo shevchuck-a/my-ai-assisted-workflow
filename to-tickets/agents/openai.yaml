@@ -1,0 +1,7 @@
+interface:
+  display_name: "02 - To Tickets"
+  short_description: "Turn an agreed task into local implementation tickets"
+
+policy:
+  allow_implicit_invocation: false
+  

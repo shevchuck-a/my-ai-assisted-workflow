@@ -1,0 +1,7 @@
+interface:
+  display_name: "01 - Task Discussion"
+  short_description: "Clarify coding tasks one decision at a time"
+
+policy:
+  allow_implicit_invocation: false
+  

@@ -1,0 +1,284 @@
+---
+name: to-tickets
+description: Break an approved task discussion, specification, plan, or current coding-task conversation into small tracer-bullet implementation tickets with explicit blocking dependencies, acceptance criteria, decision traceability, and the minimum confirmed repository context needed for a fresh implementation agent. Use when the user wants an implementation-ready ticket breakdown saved under the same branch-scoped .codex-tasks task directory as its source discussion. Do not implement the tickets or modify product code.
+---
+
+# To Tickets
+
+Turn an agreed task definition into a small set of implementation-ready tickets. Prefer vertical slices that deliver independently verifiable behavior and fit into one fresh Codex context.
+
+A ticket must normally be sufficient for `implement-ticket` to start without loading the complete parent discussion. Preserve the confirmed decisions and repository anchors that materially constrain or accelerate implementation, while avoiding a file-by-file implementation recipe.
+
+Do not implement code. Do not start a ticket. Do not publish to a remote issue tracker.
+
+## Inputs
+
+Use the first available source in this order:
+
+1. A path explicitly provided by the user.
+2. `<repository-root>/.codex-tasks/branches/<branch-key>/<task-id>/discussion.md` from the current task.
+3. An approved specification or plan already present in the conversation.
+4. The current conversation, but only when the user confirms it contains the agreed task definition.
+
+When a source path contains:
+
+`.codex-tasks/branches/<branch-key>/<task-id>/`
+
+reuse both `<branch-key>` and `<task-id>`.
+
+When no branch scope is encoded in the source, resolve the current Git branch using the same branch-key normalization rules as `task-discussion`.
+
+When no task ID exists, create one in this format:
+
+`YYYYMMDD-HHMM-short-task-slug`
+
+Use the current repository root and current branch directory as the base location.
+
+If multiple plausible task directories exist inside the current branch and the correct task cannot be determined safely, ask the user which task ID to use.
+
+Do not search other branch directories and do not choose the newest task automatically.
+
+## Process
+
+### 1. Gather the agreed context
+
+Read the complete primary source artifact.
+
+Extract:
+
+- task goal;
+- confirmed requirements and decisions;
+- decision IDs or other stable decision references, when present;
+- accepted assumptions;
+- constraints and non-goals;
+- relevant repository findings and implementation anchors;
+- relevant verification expectations;
+- unresolved blockers.
+
+Do not silently resolve a product decision that the source leaves open. If an unresolved decision materially changes the ticket breakdown, ask the user to resolve it before drafting tickets.
+
+Treat confirmed repository findings as already-paid investigation. Preserve the subset that a fresh implementation agent would otherwise need to rediscover in order to locate the change, respect an approved boundary, or avoid a known-wrong implementation direction.
+
+### 2. Explore the repository only as needed
+
+Inspect the repository when codebase facts are required to produce realistic slices, dependencies, or implementation context.
+
+Look up facts rather than asking the user, including:
+
+- existing architecture and domain vocabulary;
+- established service, API, UI, test, and configuration patterns;
+- relevant ADRs or repository instructions;
+- whether a proposed slice can land and verify independently;
+- opportunities for a small prefactor that makes later work safer;
+- stable symbols, components, or paths that materially reduce rediscovery for the implementation agent.
+
+Keep exploration targeted:
+
+- start with repository instructions and files named by the source artifact;
+- search for relevant symbols before opening files;
+- avoid broad repository scans;
+- stop once enough evidence exists to produce the breakdown;
+- do not use subagents.
+
+Do not repeat repository investigation merely to restate facts already established by an approved discussion unless current repository evidence contradicts them or the facts are insufficient to split the work safely.
+
+### 3. Draft tracer-bullet tickets
+
+Break the work into narrow but complete vertical slices.
+
+Each ticket must:
+
+- deliver behavior that is independently demoable or verifiable;
+- include every layer needed for that behavior, when applicable;
+- fit into one fresh Codex context window;
+- have clear acceptance criteria;
+- declare only genuine blocking dependencies;
+- avoid depending on later tickets;
+- use project vocabulary rather than generic terms;
+- preserve every confirmed decision that applies to that slice;
+- carry enough confirmed implementation context that `implement-ticket` normally does not need the complete parent discussion.
+
+Prefer fewer meaningful tickets over many tiny mechanical tickets.
+
+Do not create separate horizontal tickets such as "add models", "add service", "add tests", and "update pipeline" when those pieces are required for one behavior. Keep them together as one vertical slice.
+
+A ticket with no blockers can start immediately.
+
+### 4. Preserve decision traceability
+
+When the source artifact contains explicit decision IDs such as `D1`, `D2`, and `D3`, map every applicable decision to one or more tickets.
+
+Before presenting the breakdown, verify internally that:
+
+- every confirmed decision that requires implementation is represented by at least one ticket;
+- every ticket contains the decisions needed to implement that slice correctly;
+- no decision is copied into an unrelated ticket merely for completeness;
+- no ticket weakens, reinterprets, or silently broadens a confirmed decision.
+
+Record applicable decision IDs in the ticket as `**Decision refs:** ...`.
+
+Use `None` when the source has no explicit decision IDs or no decision reference applies.
+
+Decision references are traceability aids, not permission for `implement-ticket` to load the entire parent discussion by default.
+
+### 5. Preserve implementation context without prescribing implementation
+
+For each ticket, include a compact `Implementation context` section containing only confirmed repository facts or boundaries that materially help a fresh implementation agent.
+
+Include facts such as:
+
+- an existing component or symbol that already owns the relevant behavior;
+- an existing representation or contract that must remain canonical;
+- an established boundary where the new behavior belongs;
+- a current capability that should be reused rather than rebuilt;
+- a known existing behavior that must be retained or verified rather than duplicated;
+- a stable path when it is the clearest anchor discovered during the approved analysis.
+
+Do not include:
+
+- speculative implementation choices;
+- a layer-by-layer coding checklist;
+- exact function bodies or large code snippets;
+- guesses about files that were not actually established;
+- low-value paths that do not reduce rediscovery or constrain the solution.
+
+Prefer symbols, components, and responsibilities over paths when equally precise. Preserve an exact path when the approved source or targeted repository inspection has already established it as a useful implementation anchor.
+
+The distinction is:
+
+- ticket says **what** behavior to deliver;
+- ticket records **which confirmed boundaries and repository facts matter**;
+- implementation agent decides **how** to make the smallest coherent code change.
+
+### 6. Handle prefactors and wide refactors
+
+Use a separate prefactor ticket only when it makes a later behavior change materially safer or smaller. The prefactor must preserve behavior and be independently verifiable.
+
+Wide mechanical refactors are an exception to vertical slicing. Use expand-contract:
+
+1. **Expand** - introduce the new form beside the old form while keeping existing callers working.
+2. **Migrate** - move callers in independently verifiable batches sized by blast radius.
+3. **Contract** - remove the old form only after every migration ticket is complete.
+
+Make every migrate ticket depend on the expand ticket. Make the contract ticket depend on all migrate tickets.
+
+When individual migration batches cannot remain green, explicitly describe the integration constraint and add a final integrate-and-verify ticket.
+
+### 7. Assign blocking edges
+
+Order tickets so blockers appear before blocked tickets.
+
+For every ticket, identify the smallest real dependency set.
+
+Do not add a blocking edge merely because another ticket is listed earlier. A ticket is blocked only when it cannot be implemented or verified correctly before the blocker is complete.
+
+Allow parallel work when tickets have no genuine dependency.
+
+### 8. Present the proposed breakdown
+
+Before writing files, present a numbered proposal containing, for every ticket:
+
+- **Title**
+- **Blocked by**
+- **What it delivers**
+- **Decision refs**, when the source has explicit decisions
+- **Acceptance criteria**
+
+Then ask one concise approval question:
+
+> Approve this breakdown, or tell me which tickets to merge, split, reorder, or rewire.
+
+Revise the proposal until the user explicitly approves it.
+
+Do not write ticket files before approval.
+
+### 9. Write approved ticket files
+
+Create:
+
+```text
+<repository-root>/.codex-tasks/branches/<branch-key>/<task-id>/tickets/
+```
+
+Write one Markdown file per ticket:
+
+```text
+<NN>-<short-slug>.md
+```
+
+Number tickets from `01` in dependency order, blockers first.
+
+Do not create one combined ticket document. Do not overwrite unrelated existing tickets.
+
+If the target directory already contains ticket files, stop and ask whether to replace them or create a revised set. Do not silently overwrite them.
+
+When the primary source is the task discussion at `../discussion.md` relative to the ticket directory, record that stable relative source path in each ticket. When the source is elsewhere, record the actual source path only if it is a stable local artifact; otherwise use a concise source description.
+
+## Ticket Template
+
+Use this exact structure:
+
+```markdown
+# <NN> - <Ticket title>
+
+**What to build:** <The complete end-to-end behavior this ticket delivers from the user or system perspective. Do not provide a layer-by-layer implementation checklist.>
+
+**Blocked by:** <Ticket numbers and titles, or "None - can start immediately".>
+
+**Status:** ready-for-agent
+
+**Source:** <`../discussion.md`, another stable artifact path, or a concise source description>
+
+**Decision refs:** <Applicable decision IDs such as `D1, D2`, or `None`>
+
+## Context
+
+<Only the task-specific decisions, constraints, and domain context needed to implement this ticket correctly.>
+
+## Implementation context
+
+- <Confirmed repository fact, implementation boundary, existing capability, or stable anchor that materially reduces rediscovery.>
+- <Another relevant confirmed fact, or `None` when no such context is needed.>
+
+## Acceptance criteria
+
+- [ ] <Observable or verifiable result>
+- [ ] <Observable or verifiable result>
+
+## Verification
+
+- <The expected targeted checks or evidence. Do not invent authorization for external or state-changing checks.>
+
+## Out of scope
+
+- <Related work intentionally excluded from this ticket.>
+```
+
+## Writing Rules
+
+- Describe outcomes, not a file-by-file implementation recipe.
+- Keep each ticket self-contained for normal implementation while avoiding duplication of irrelevant parent-task context.
+- Preserve all confirmed decisions that materially constrain the slice.
+- Preserve confirmed repository anchors when they materially reduce rediscovery or prevent a wrong implementation direction.
+- Prefer symbols, components, and responsibilities over exact paths when equally precise.
+- Include an exact path when it is an established and useful anchor, not merely because it was encountered during exploration.
+- Do not repeat the entire discussion artifact in every ticket.
+- Do not copy rationale that is not needed to preserve a constraint or prevent reinterpretation.
+- Include a short decision rationale only when omitting it could plausibly cause an implementation agent to choose a rejected alternative.
+- Use acceptance criteria that can be checked, not vague statements such as "works correctly".
+- Keep context compact enough for a fresh implementation chat.
+- Do not create speculative follow-up tickets outside the approved scope.
+- Do not turn `Implementation context` into an ordered coding plan.
+- Never import requirement context from another branch's `.codex-tasks` directory.
+
+## Completion
+
+After writing the files, report:
+
+- task ID;
+- output directory;
+- ticket count;
+- tickets that can start immediately;
+- the recommended first ticket.
+
+Do not implement any ticket. The next step must be explicitly initiated by the user in a separate implementation request or chat.

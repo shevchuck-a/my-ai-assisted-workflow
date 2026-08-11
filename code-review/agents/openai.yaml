@@ -1,0 +1,6 @@
+interface:
+  display_name: "04 - Code Review"
+  short_description: "Review diffs and pull requests independently"
+
+policy:
+  allow_implicit_invocation: false
