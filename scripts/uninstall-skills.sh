@@ -3,11 +3,12 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+skills_root="$repo_root/delivery-workflow"
 codex_skills_dir="${CODEX_HOME:-$HOME/.codex}/skills"
 
 [[ -d "$codex_skills_dir" ]] || exit 0
 
-for skill_file in "$repo_root"/*/SKILL.md; do
+for skill_file in "$skills_root"/*/SKILL.md; do
   [[ -f "$skill_file" ]] || continue
 
   source_dir="$(dirname "$skill_file")"

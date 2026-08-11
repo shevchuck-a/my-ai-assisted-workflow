@@ -1,7 +1,7 @@
 # AI-Assisted Workflow Skills
 
-This repository contains local Codex skills. Each top-level directory with a
-`SKILL.md` file is treated as one skill.
+This repository contains local Codex skills in `delivery-workflow/`. Each
+directory there with a `SKILL.md` file is treated as one skill.
 
 ## Included skills
 

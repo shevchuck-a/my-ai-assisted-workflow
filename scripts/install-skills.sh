@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Link each top-level project skill into this user's Codex skills directory.
+# Link each delivery-workflow skill into this user's Codex skills directory.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+skills_root="$repo_root/delivery-workflow"
 codex_skills_dir="${CODEX_HOME:-$HOME/.codex}/skills"
 
 mkdir -p "$codex_skills_dir"
 
-for skill_file in "$repo_root"/*/SKILL.md; do
+for skill_file in "$skills_root"/*/SKILL.md; do
   [[ -f "$skill_file" ]] || continue
 
   source_dir="$(dirname "$skill_file")"
