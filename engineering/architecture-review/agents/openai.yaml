@@ -1,0 +1,3 @@
+interface:
+  display_name: "ENG · Architecture Review"
+  short_description: "Review codebase architecture and prioritize worthwhile improvements"
