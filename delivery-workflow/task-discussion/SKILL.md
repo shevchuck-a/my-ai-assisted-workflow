@@ -54,6 +54,35 @@ Do not ask about trivial, reversible implementation details unless they create a
 
 Never silently convert an unresolved decision into an assumption. If the user explicitly delegates a class of decisions, record that delegation and apply it only within the stated scope.
 
+## Test strategy decision
+
+When the task changes production behavior and automated code-level tests are
+in scope, explicitly resolve the implementation test strategy before
+confirming the discussion.
+
+Unless the user has already specified a preference, ask whether the behavior
+should be implemented test-first.
+
+Recommend test-first development by default:
+
+1. express the required behavior in an automated test;
+2. verify that the test fails for the expected behavioral reason;
+3. implement the smallest production change that makes it pass;
+4. refactor only while the relevant tests remain green.
+
+Do not ask this question for documentation-only, configuration-only, or other
+tasks where code-level behavioral tests are clearly not applicable.
+
+Do not infer the expected test behavior from a proposed implementation.
+Derive it from confirmed requirements, decisions, and acceptance criteria.
+
+Record the confirmed choice under `Confirmed Decisions` and reflect the
+authorized test execution under `Verification Expectations`.
+
+If the user explicitly delegates test strategy, record that delegation and
+apply the recommended test-first approach unless repository constraints make
+it unsuitable.
+
 ## Investigation discipline
 
 Inspect only files relevant to resolving the current fact or decision.
@@ -183,6 +212,7 @@ Write `discussion.md` with this structure:
 ## Verification Expectations
 
 - <Checks the user expects or authorizes>
+- <When automated tests are in scope, state whether test-first execution is required and which local test execution is authorized>
 
 ## Constraints and Risks
 

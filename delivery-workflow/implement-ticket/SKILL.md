@@ -150,11 +150,14 @@ Use the following default budget for a bounded task:
 
 - one intake/status call;
 - one or two targeted inspection calls;
-- one implementation call;
-- one combined verification call;
+- when test-first applies, one focused test edit and RED execution;
+- one focused production implementation call;
+- one GREEN execution and combined final verification call;
 - at most one focused correction and re-verification cycle.
 
-Target roughly 6-10 tool calls and no more than two repository-inspection rounds before the first edit.
+Target roughly 8-12 tool calls for a test-first task and fewer when automated tests are not required. Keep no more than two repository-inspection rounds before the first edit.
+
+RED and GREEN executions required by the test-first workflow are intentional workflow steps and must not be skipped merely to reduce tool-call usage.
 
 A selective parent-discussion lookup in ticket mode should replace unnecessary repository rediscovery, not become an additional broad investigation phase.
 
@@ -234,7 +237,58 @@ After locating a symbol, inspect one range of approximately 40-100 lines with en
 
 Keep each normal inspection response below approximately 8 KB. If output is truncated or excessive, narrow it; do not repeat the same command.
 
-### 4. Implement coherently
+### 4. Test-first implementation
+
+When the selected task changes production behavior and automated tests are
+explicitly required, use RED → GREEN → REFACTOR unless the selected primary
+input explicitly requires another implementation strategy.
+
+Derive the expected behavior from the selected task definition:
+
+- confirmed requirements;
+- confirmed decisions;
+- acceptance criteria;
+- documented contracts and preserved behavior.
+
+Do not derive the expected behavior from production code written for the task.
+
+For each independently testable behavior, when practical:
+
+1. Create or update the smallest focused automated test that expresses the
+   required behavior before changing the corresponding production behavior.
+2. Run that focused test and establish RED.
+3. Confirm that it fails because the required behavior is not yet implemented.
+4. Only then make the smallest coherent production change needed for that
+   behavior.
+5. Re-run the focused test and establish GREEN.
+6. Refactor only after GREEN and keep the relevant tests passing.
+
+A valid RED result must demonstrate the missing or incorrect requested
+behavior.
+
+The following do not count as RED:
+
+- syntax or import errors introduced by the test;
+- broken fixtures or test setup;
+- missing dependencies or environment failures;
+- unrelated pre-existing failures;
+- intentionally weakening or corrupting existing code merely to force failure.
+
+If the new test passes before the production change, determine why before
+continuing. The behavior may already exist, the test may not exercise the
+requested change, or the task assumptions may be stale. Do not manufacture a
+failure merely to satisfy the RED step.
+
+If a required behavior cannot reasonably be expressed or executed through the
+available local automated test infrastructure, do not silently replace TDD
+with tests-after. Use the clarification rule unless the selected input already
+defines an acceptable alternative verification strategy.
+
+For a ticket containing several closely related behaviors, prefer small
+RED → GREEN cycles over writing the complete implementation first and adding
+tests afterward.
+
+### 5. Implement coherently
 
 Implement only the requested behavior and acceptance criteria.
 
@@ -256,9 +310,13 @@ If a patch fails:
 - retry once;
 - do not reread every touched file or regenerate a repository-wide patch.
 
-### 5. Verify once, then inspect only concerns
+### 6. Final verification
 
-Run compatible final checks together when practical:
+RED and GREEN executions performed by the test-first workflow are part of
+implementation and do not count as redundant verification.
+
+After implementation reaches GREEN, run the remaining authorized final checks
+once.
 
 - `git status --short`;
 - `git diff --stat`;
@@ -284,52 +342,94 @@ Do not introduce classes, interfaces, abstractions, or indirection without a req
 
 Keep touched code focused, readable, and no less understandable than before.
 
-## Test creation policy
+## Automated test creation policy
 
-Never create new unit tests unless the user explicitly requests unit tests in the current task.
+Do not create or expand automated test coverage unless the selected primary
+input explicitly requires automated tests or confirms test-first development.
 
-Do not add test-only wrappers, mocks, fixtures, fake implementations, or harnesses merely to unit-test automation or test-framework code.
+The selected primary input counts as explicit authorization when it is:
 
-Do not interpret `verify the change`, `add coverage`, an acceptance criterion, or a repository convention as permission to create unit tests.
+- the user's current direct request;
+- a confirmed discussion artifact selected for implementation;
+- an approved ticket selected for implementation.
 
-Existing test code may be modified when that test code is itself the requested product. This does not authorize separate tests for the test code.
+Generic requests such as `verify the change`, `check coverage`, repository
+conventions, or an acceptance criterion that merely describes behavior do not
+by themselves authorize creating new automated tests.
 
-Do not broaden a coding task into a test-writing task.
+When automated tests are explicitly in scope:
 
-## Static verification only
+- create or update only the tests needed to express the requested behavior;
+- follow the repository's existing test style and boundaries;
+- allow normal test fixtures, mocks, fakes, and helpers when they are necessary
+  and consistent with repository conventions;
+- do not introduce production abstractions or public interfaces solely to make
+  testing easier unless the task or existing architecture justifies them;
+- do not broaden focused behavioral coverage into unrelated test cleanup.
 
-By default, never execute project code. Run only narrowly scoped static checks.
+When the task changes production behavior and automated tests are required,
+use the test-first workflow defined below unless the selected input explicitly
+requires another implementation strategy.
 
-Allowed checks include:
+## Runtime verification policy
+
+By default, do not execute project code. Run only narrowly scoped static
+checks unless one of the explicit exceptions below applies.
+
+Allowed static checks include:
 
 - type checking;
 - linting;
 - formatting in check-only mode;
-- static syntax or configuration validation that does not import or execute project code;
+- static syntax or configuration validation that does not import or execute
+  project code;
 - static schema validation;
 - diff and repository-state inspection.
 
-Do not run, start, import, or execute:
+### Automated test exception
 
-- the application or a project entrypoint;
-- unit, integration, end-to-end, API, UI, or smoke tests;
-- test runners or coverage tools;
+The selected primary input may authorize local automated test execution when
+it explicitly:
+
+- requires automated tests and confirms test-first development; or
+- instructs the implementation agent to run automated tests as part of
+  verification.
+
+A confirmed discussion artifact or approved ticket selected as the primary
+implementation input counts as authorization for this narrow exception.
+
+When this exception applies, run only:
+
+- the smallest focused test needed to establish RED;
+- the same focused test needed to establish GREEN;
+- the final automated test scope explicitly required by the selected input.
+
+If the selected input requires automated tests but does not name the exact
+test command, resolve the established repository test command from repository
+instructions or test configuration rather than asking the user.
+
+This exception does not authorize:
+
+- application or project entrypoints;
 - migrations, seeds, generators, or data-processing jobs;
-- builds that execute project code, plugins, generators, or lifecycle hooks;
-- containers, services, browsers, devices, pipelines, or external-system checks.
+- containers or services;
+- browsers or devices;
+- live external systems;
+- tests requiring credentials or stateful remote dependencies;
+- deployment or pipeline execution.
 
-Do not treat a ticket, discussion artifact, acceptance criterion, repository convention, or existing command as authorization to execute code.
+Those actions still require explicit authorization in the current task unless
+the selected primary input specifically and safely authorizes them.
 
-Only an explicit instruction from the user in the current task may override this policy. Run only the requested command and scope.
+Do not expand a targeted RED/GREEN run into unrelated runtime verification.
 
-Do not ask for runtime authorization by default. Complete useful static verification and report runtime verification as not run.
+When an authorized test fails:
 
-When a static check fails:
-
-- determine whether the current change caused it;
-- fix regressions caused by the task;
+- distinguish an expected RED failure from infrastructure or unrelated
+  failures;
+- fix regressions caused by the current task;
 - report unrelated pre-existing failures without expanding scope;
-- do not suppress or weaken checks to make them pass.
+- do not weaken or suppress tests merely to obtain GREEN.
 
 ## Follow-up fixes
 
@@ -354,9 +454,13 @@ Before declaring completion, confirm:
 - only intended files and areas changed;
 - unrelated user changes remain preserved;
 - static-check results are reported accurately;
-- runtime checks are reported as not run unless explicitly authorized;
+- authorized automated test execution is reported accurately, and other runtime checks are reported as not run unless separately authorized;
 - no secrets, generated junk, debug output, or unrelated cleanup were added;
 - the design remains proportional to the task.
+- when test-first development applied, RED was established before the
+  corresponding production behavior was changed;
+- authorized automated tests reached GREEN and their results are reported
+  accurately;
 
 Do not perform extra cleanup after the requested change is complete.
 
@@ -383,8 +487,11 @@ Report concisely:
 
 - what was implemented;
 - files or areas changed;
-- static checks performed and their results;
-- runtime checks not run by policy;
+- tests created or updated, when applicable;
+- when test-first applied, the RED result and why it was the expected failure;
+- the corresponding GREEN result;
+- final automated and static checks performed and their results;
+- runtime checks not authorized or not run;
 - blockers or remaining work;
 - recommended git commit message.
 
