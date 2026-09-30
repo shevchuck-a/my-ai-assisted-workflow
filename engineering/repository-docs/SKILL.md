@@ -1,13 +1,13 @@
 ---
 name: repository-docs
-description: "Create, audit, or synchronize repository documentation for humans and coding agents. Use when documentation must be bootstrapped for a new repository, brought back in sync after code or architecture changes, reviewed for drift or duplication, or optimized into separate human-facing docs and AI-facing context/instructions. Adapts to the repository's existing documentation conventions instead of assuming specific paths such as docs/, ai/, or AGENTS.md."
+description: "Create, audit, or synchronize repository documentation for humans and coding agents. Investigate repository facts, resolve material documentation questions one at a time, and save a branch-scoped handoff for audits or substantial documentation work. Follow existing documentation conventions rather than assuming docs/, ai/, or AGENTS.md."
 ---
 
 # Repository Docs
 
 Maintain the repository's durable knowledge system for both humans and coding agents.
 
-This skill may create or edit documentation and agent-context files. It does not modify production code, tests, build logic, CI, or architecture merely to make documentation consistent.
+This skill may create or edit documentation and agent-context files. It does not modify production code, tests, build logic, CI, or architecture merely to make documentation consistent. An AUDIT writes only its temporary review artifact, not durable documentation.
 
 ## Operating boundaries
 
@@ -36,7 +36,7 @@ Before repository-wide documentation work, establish both the intended **operati
 - **AI** — context and instructions optimized for coding agents, context efficiency, and repository navigation.
 - **BOTH** — maintain both surfaces and their consistency.
 
-Do not infer a materially ambiguous operation or audience. If either is unclear from the user's request, ask the user to resolve it before continuing.
+Do not infer a materially ambiguous operation or audience. If either is unclear from the user's request, ask the user to resolve it before continuing. Ask one question at a time, explaining why the choice matters, recommending an answer with reasons, and offering concise alternatives when useful. Wait for the answer before asking a dependent question.
 
 Do not ask the user to repeat information already explicit in the request.
 
@@ -47,6 +47,14 @@ Ask at most a small number of additional questions, and only when the answer mat
 - which AI-facing surface is intended when multiple incompatible conventions exist and repository evidence cannot resolve ownership.
 
 Do not ask questions whose answers can reasonably be discovered from the repository, including existing documentation paths, technologies, build or verification commands, repository instructions, dependency files, or source layout.
+
+## Interaction and checkpointing
+
+Resolve repository facts through investigation. Discuss one material decision at a time when evidence cannot establish the intended policy, audience, scope, or authoritative source. Reassess dependent work after each answer. Do not present a completed audit with a list of user-resolvable questions, and do not silently choose a side when code and intended policy conflict.
+
+For AUDIT, or substantial BOOTSTRAP/SYNC work that spans multiple documentation surfaces or needs decisions to survive the conversation, create a compact `draft` artifact after the initial investigation. Record scope, evidence pointers, provisional gaps or changes, confirmed decisions, and the next unresolved question if any. Report its path so the work can resume. Update it only when a material decision or new evidence changes the checkpoint; avoid repeated full report rewrites. For a narrow documentation correction, the changed document itself is sufficient and no separate task artifact is needed.
+
+Before completing an AUDIT, summarize findings and priorities for user confirmation. Resolve remaining user-answerable questions one at a time, then expand the artifact into a complete audit handoff. For BOOTSTRAP/SYNC, resolve material decisions before editing; after verification, complete the artifact with actual changed paths and results. Record unavailable external evidence as a limitation and state its effect. Do not mark an artifact complete while a user-resolvable question materially affects its conclusions.
 
 ## Reference material
 
@@ -139,7 +147,7 @@ For **BOOTSTRAP**, establish the smallest structure that makes the repository un
 
 For **SYNC**, preserve coherent existing organization and change only what is needed to restore alignment.
 
-For **AUDIT**, do not modify files; report evidence-backed gaps, conflicts, and recommended ownership changes.
+For **AUDIT**, do not modify durable documentation; report evidence-backed gaps, conflicts, and recommended ownership changes in the temporary review artifact.
 
 ### 6. Maintain human-facing documentation
 
@@ -230,7 +238,13 @@ For AUDIT, summarize:
 - duplication/ownership problems;
 - recommended changes, ordered by value.
 
-Do not create a separate persistent documentation report unless the repository already uses such an artifact or the user explicitly requests one.
+For AUDIT and substantial BOOTSTRAP/SYNC work, use `references/documentation-handoff-template.md` to complete the task artifact at `<repository-root>/.codex-tasks/branches/<branch-key>/<task-id>/repository-docs.md`. Keep the artifact evidence-oriented; it is a working handoff, not authoritative repository documentation. Report its path and status. For a narrow correction, report the durable documentation paths changed instead.
+
+## Branch and task artifact path
+
+Resolve the repository root with `git rev-parse --show-toplevel` and preserve the original name from `git branch --show-current` in artifact metadata. Make `<branch-key>` lowercase with only letters, digits, and hyphens: replace unsupported characters, collapse repeated hyphens, and trim them. For detached HEAD use `detached-<short-sha>`. Outside Git, use the current working directory as root and `no-git` as the branch key; record the fallback.
+
+Reuse the current task ID when supplied or established by an existing discussion artifact. Otherwise generate `<YYYYMMDD-HHMM>-<short-docs-slug>`. Normalize it with the same filesystem-safe rules and keep it stable. Check collisions only in the current branch directory; suffix an ID when it belongs to another task. Never overwrite an unrelated artifact. Create the task directory when saving the first draft.
 
 ## What not to do
 

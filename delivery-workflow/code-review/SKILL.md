@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Review local changes, branch diffs, or pull requests independently by inspecting the actual diff and surrounding code for correctness, regressions, requirement gaps, security risks, and maintainability problems. Perform the initial review without task-planning artifacts. After forming provisional findings, selectively consult matching task-discussion and to-tickets artifacts from the reviewed branch only when intent, scope, or an approved decision could change whether a candidate finding is actionable. Ask the user only for unresolved product or scope decisions that repository evidence and branch-scoped artifacts cannot answer.
+description: Independently review local changes, branch diffs, or pull requests for correctness, regressions, requirement gaps, security risks, and concrete maintainability problems. Start from the diff and bounded repository context; for pull requests, then make a best-effort attempt to retrieve the PR description and explicitly linked tickets or work items before checking requirement coverage and adjudicating intent-dependent findings.
 ---
 
 # Code Review
@@ -22,12 +22,15 @@ The skill must work without `.codex-tasks` artifacts. This is the normal case fo
 
 ## Review independence and requirement context
 
-Preserve independence between implementation planning and initial review.
+Preserve independence between the author's implementation rationale and the initial technical review.
 
-### Phase 1 - blind code review
+Blind review means independent from requirement framing and author rationale, not independent from the repository. Repository code, contracts, guidance, and directly affected relationships remain necessary technical evidence.
 
-Before forming provisional findings, do not read:
+### Phase 1 - independent technical review
 
+Before forming provisional technical findings, do not use the content of:
+
+- pull request descriptions or linked tickets/work items as requirement context;
 - task-discussion artifacts;
 - to-tickets artifacts;
 - implementation summaries;
@@ -40,24 +43,35 @@ Inspect only:
 - applicable repository instructions;
 - interfaces, callers, tests, configuration, and architecture directly needed to understand the changed code.
 
-The purpose of this phase is to discover candidate problems without being biased by implementation rationale or approved planning decisions.
+The purpose of this phase is to discover candidate problems without anchoring on the author's rationale, stated solution, or approved planning decisions.
 
-### Phase 2 - finding adjudication
+### Phase 2 - requirement discovery and alignment
 
-After provisional findings exist, determine for each candidate whether its validity depends on intent, scope, requirements, or an approved trade-off.
+After the independent technical pass, actively attempt to discover requirement context. Do not limit this step to adjudicating existing candidates: confirmed requirements may reveal missing or only partially implemented behaviour that cannot be inferred from the diff alone.
 
-Do not consult task artifacts for a finding that can be proven or disproven from code and repository contracts alone.
+When the review target is a pull request, make a best-effort, read-only attempt to retrieve context through an already available repository-platform integration, authenticated CLI/API, or metadata supplied by the user. Use this order:
 
-For intent-dependent candidates, selectively consult matching task artifacts from the reviewed branch.
+1. PR title and requirement-bearing parts of its description;
+2. tickets or work items explicitly linked to the PR;
+3. a ticket/work-item ID unambiguously referenced in PR metadata or the branch name;
+4. matching `.codex-tasks` artifacts from the reviewed branch, when present.
+
+For a linked ticket or work item, read only the title, description, acceptance criteria, and other fields needed to understand material requirements or confirmed scope. Inspect comments, history, parent/child items, or other relations only when the item explicitly points to them as the authoritative requirement or they are necessary to resolve a concrete material ambiguity.
+
+Do not perform a semantic or organization-wide ticket search. Do not infer a ticket association from similar terminology alone.
+
+Do not install or connect integrations, request credentials, or expand access solely to retrieve PR requirements. If PR metadata or linked work items cannot be accessed, continue the review and record the limitation in the review summary. The absence of a linked ticket is not itself a finding.
 
 For a checked-out current branch, derive `<branch-key>` using the same normalization rules as `task-discussion` and search only under:
 
 `.codex-tasks/branches/<branch-key>/`
 
-Requirement context may come from:
+Branch-scoped requirement context may come from:
 
 - `<task-id>/discussion.md`
 - `<task-id>/tickets/*.md`
+
+Search narrowly using changed symbols, domain terms, affected components, requirement vocabulary, or concepts from a candidate finding. Prefer targeted text search before opening an artifact, open only the relevant sections, and do not enumerate every task artifact merely because it belongs to the branch.
 
 Do not use:
 
@@ -66,23 +80,31 @@ Do not use:
 - implementation chat summaries;
 - checked acceptance boxes as proof of correctness.
 
-Search narrowly using changed symbols, domain terms, affected components, requirement vocabulary, or concepts from the candidate finding.
+Map every material requirement or acceptance criterion found to the implementation. Requirement sources establish intended behaviour and scope; code remains the source of truth for whether they were implemented correctly.
 
-Prefer targeted text search across branch task artifacts before opening any artifact.
+A linked source establishes relevance, not necessarily committed scope.
 
-Open only the matching artifact sections needed to adjudicate the candidate.
+Treat an item as a confirmed requirement only when the PR description, ticket, acceptance criteria, or another approved decision explicitly places it within the scope of the reviewed change.
 
-Do not enumerate or read every task artifact merely because it belongs to the current branch.
+An item found only because it belongs to a linked test plan, suite, epic, checklist, specification, or catalog is a scope signal rather than a confirmed requirement.
 
-Artifacts may:
+If a missing implementation is actionable only when that scope signal is interpreted as required work, classify it as intent-dependent and ask the user to resolve the underlying scope decision before reporting it as a finding.
 
-- confirm that a candidate is a real requirement violation;
-- show that apparently unusual behavior is an explicitly approved decision;
+### Phase 3 - finding adjudication
+
+After technical candidates and requirement-coverage candidates exist, determine whether each candidate depends on intent, scope, compatibility policy, or an approved trade-off.
+
+Do not consult requirement artifacts for a finding that can be proven or disproven from code and repository contracts alone.
+
+For intent-dependent candidates, use only the relevant requirement sources discovered in Phase 2. These sources may:
+
+- confirm a requirement violation;
+- show that apparently unusual behaviour is an explicitly approved decision;
 - establish an intentional scope boundary;
 - clarify an acceptance criterion;
 - strengthen or dismiss an intent-dependent candidate.
 
-Artifacts provide intent. Code remains the source of truth for whether that intent was implemented correctly.
+Author rationale may explain an implementation choice, but it is not proof of correctness and does not override a confirmed requirement or repository contract.
 
 ## Review process
 
@@ -114,11 +136,28 @@ Inspect:
 - existing tests only as evidence of expected behaviour and coverage, not as proof of correctness;
 - relevant error handling, cleanup, concurrency, data flow, and boundary conditions.
 
-Follow important symbols far enough to understand behavioural impact. Avoid repository-wide exploration when a narrower inspection is sufficient.
+Follow important symbols far enough to understand behavioural impact.
 
-### 4. Check requirement alignment
+### 4. Reconstruct repository context
 
-When requirements are available, map the implementation to each material requirement or acceptance criterion.
+For each materially changed responsibility or contract, formulate concrete review questions before expanding beyond the changed files. Examples include which callers depend on the changed behaviour, which contract defines the expected semantics, and where failures or outputs are consumed.
+
+Expand context only to answer such a question. Prefer this order, skipping any layer that is irrelevant:
+
+1. changed file and directly related symbols;
+2. direct interfaces, schemas, or contracts;
+3. direct callers and consumers;
+4. relevant tests;
+5. analogous implementations of the same responsibility;
+6. local configuration and architecture documentation for the affected area.
+
+Existing repository code is evidence of established practice, not automatic proof that a different implementation is wrong. Report a repository inconsistency only when the difference has a concrete consequence such as bypassed behaviour, incompatible semantics, duplicated policy, or a realistic changeability or correctness risk.
+
+Stop exploring when the concrete review question is answered, the candidate finding is validated or dismissed, or the next relationship is no longer plausibly affected by the change. Do not continue reading the repository merely to improve general understanding or turn a scoped code review into a repository-wide architecture audit.
+
+### 5. Acquire requirement context and check alignment
+
+Apply Phase 2 after completing the independent technical pass. When requirements are available, map the implementation to each material requirement or acceptance criterion.
 
 Look for:
 
@@ -129,9 +168,9 @@ Look for:
 - ticket work implemented before a genuine blocker;
 - functionality that exists only partially across affected layers.
 
-Artifacts provide intent. The code determines whether that intent was implemented.
+If no requirement source is available, continue the technical review without inventing requirements and state the limitation in the summary.
 
-### 5. Look for actionable defects
+### 6. Look for actionable defects
 
 Prioritize findings in this order:
 
@@ -153,7 +192,7 @@ Do not report:
 - broad refactoring suggestions outside the reviewed scope;
 - praise or a summary disguised as a finding.
 
-### 6. Verification policy
+### 7. Verification policy
 
 Do not run application code or any runtime verification unless the user explicitly authorizes it in the current request.
 
@@ -174,7 +213,7 @@ Static inspection is always allowed. Run static commands only when they are rele
 
 Never create unit tests or any other tests during review. A review reports findings; it does not implement fixes or test coverage.
 
-### 7. Validate each proposed finding
+### 8. Validate each proposed finding
 
 Before reporting a finding:
 
@@ -184,9 +223,13 @@ Before reporting a finding:
 4. describe a concrete failure scenario;
 5. confirm that the issue is within the review scope and actionable by the author.
 
+When a finding depends on effective runtime or CI behaviour, trace the actual execution entry point and configuration precedence, including command-line arguments, environment variables, selected projects or profiles, pipeline templates, and other overrides. Do not infer effective behaviour from a default configuration value alone.
+
+A candidate is not validated while a material premise that can be resolved from repository evidence remains unchecked.
+
 Omit findings that cannot pass this validation.
 
-### 8. Classify provisional findings
+### 9. Classify provisional findings
 
 Before reporting a candidate, classify it as one of:
 
@@ -216,7 +259,7 @@ Examples include:
 - whether a deliberately narrow implementation should have been generalized;
 - whether a special input state is intentionally excluded.
 
-Adjudicate these against current-branch task artifacts before asking the user.
+Adjudicate these against the relevant PR description, linked tickets/work items, and current-branch task artifacts discovered in Phase 2 before asking the user.
 
 ## Severity levels
 
@@ -235,10 +278,11 @@ Do not report provisional findings.
 
 A candidate may appear in the final review only after:
 
-1. its technical basis has been validated;
+1. its technical or requirement basis has been validated;
 2. relevant repository handling has been checked;
-3. requirement-dependent ambiguity has been adjudicated against matching branch task artifacts when applicable;
-4. any remaining user-owned decision has been resolved interactively.
+3. available requirement sources have been checked for coverage and contradictory scope;
+4. requirement-dependent ambiguity has been adjudicated against relevant PR, ticket/work-item, and branch task context when applicable;
+5. any remaining user-owned decision has been resolved interactively.
 
 Discard candidates that are explicitly allowed by confirmed requirements or scope.
 
@@ -269,7 +313,8 @@ After findings, include:
 
 - Scope reviewed: ...
 - Initial review context: code/repository only
-- Requirement adjudication: none / current-branch task artifacts consulted
+- Requirement context: PR description / linked work items <IDs> / current-branch task artifacts / none found / unavailable
+- Requirement coverage: checked / limited (<reason>) / not applicable
 - User clarifications: none / <count>
 - Static checks: ...
 - Runtime verification: Not run by policy
@@ -309,7 +354,10 @@ Review artifacts are outputs of review and must never be used as requirement con
 Ask the user only when:
 
 - the review target or comparison base cannot be determined safely; or
-- an intent-dependent provisional finding cannot be resolved from repository evidence or matching branch-scoped task artifacts.
+- requirement sources materially conflict and their precedence cannot be determined; or
+- an intent-dependent provisional finding cannot be resolved from repository evidence or the available PR, ticket/work-item, and branch-scoped requirement context.
+
+Do not ask the user to provide a ticket merely because no ticket is linked or ticket access is unavailable. Continue the review, disclose the limitation, and ask only the underlying product or scope decision if it is necessary to adjudicate a concrete candidate.
 
 For unresolved review decisions:
 

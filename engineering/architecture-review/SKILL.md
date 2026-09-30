@@ -1,13 +1,13 @@
 ---
 name: architecture-review
-description: "Advisory engineering skill for reviewing the architecture of an existing repository or substantial subsystem, identifying evidence-backed structural problems, guardrail gaps, and documentation gaps, and prioritizing refactoring candidates by expected engineering value. Use for repository setup reviews, periodic architecture health checks, pre-refactoring analysis, or when a codebase has become hard to change, test, navigate, or reason about. Respect repository-specific instructions and conventions. Do not implement refactors, redesign a selected solution in detail, or generate permanent repository documentation."
+description: "Interactively review the architecture of an existing repository or substantial subsystem, resolve material questions one at a time, and save an evidence-backed review artifact. Use for repository setup reviews, architecture health checks, or pre-refactoring analysis. Do not implement refactors or generate permanent repository documentation."
 ---
 
 # Architecture Review
 
 Use this skill to determine which architectural problems in an existing repository are worth addressing and in what order. Review the repository as a system, not as a collection of isolated code smells.
 
-The skill is advisory-only. Its normal durable output is an Architecture Review handoff that can feed focused design, discussion, planning, or delivery work.
+The skill is advisory-only. Its durable output is an Architecture Review handoff that can feed focused design, discussion, planning, or delivery work.
 
 ## Operating boundaries
 
@@ -32,6 +32,18 @@ Classify material observations into three categories:
 - **Documentation gap** — the architecture or engineering contract may be sound, but important knowledge is missing, stale, contradictory, or difficult to discover.
 
 Do not turn a guardrail or documentation gap into a redesign recommendation unless the underlying architecture is itself problematic.
+
+## Interaction and checkpointing
+
+Resolve repository facts through investigation. Ask the user only about material choices or context that repository evidence cannot establish and that could change a finding, its priority, or the recommended next step. Do not ask the user to validate technical claims that can be checked in the repository.
+
+After the initial investigation, briefly share the architectural map and provisional concerns. Create a compact draft review artifact, even if no material questions have emerged, so the review can resume in another conversation. Keep the draft limited to scope, evidence pointers, provisional conclusions, resolved decisions, and the next unresolved question if any. Mark it `draft`; do not present provisional findings as final.
+
+Create the draft at `<repository-root>/.codex-tasks/branches/<branch-key>/<task-id>/architecture-review.md`, using the branch and task ID rules below. If the current task already has a discussion artifact, reuse its task directory. Report the draft path so a later conversation can resume from it.
+
+Discuss material questions **one at a time**. For each, explain why it matters, give an evidence-based recommendation and concise alternatives when useful, then wait for the user's answer. Reassess dependent findings and priorities after each answer. Update the draft only when a material decision or new evidence changes the checkpoint; do not reread or rewrite a full report for every answer. Do not present a list of questions as a completed review.
+
+Before completion, summarize the proposed conclusions and priorities and ask the user to confirm them. Resolve any resulting material questions in the same one-at-a-time manner. Unknowns that require unavailable external evidence may remain as explicit limitations, with their effect on confidence and prioritization stated. Do not mark the review complete while a user-resolvable question materially affects its conclusions.
 
 ## Workflow
 
@@ -146,26 +158,27 @@ Examples include:
 
 This section is part of the review discipline, not an obligation to defend every existing design.
 
-### 8. Produce the Architecture Review handoff
+### 8. Finalize the Architecture Review handoff
 
-For a substantive review, read `references/architecture-review-template.md` and use it as the stable handoff contract.
+After the conclusions are confirmed, read `references/architecture-review-template.md` and expand the draft into the complete handoff. Set its status to `complete`.
 
 The artifact should preserve conclusions and evidence needed by a downstream human or agent without requiring the original conversation.
 
-When repository context is available:
-
-- prefer an existing convention for temporary task, design, or review artifacts;
-- do not assume a particular directory or filename;
-- do not create a new permanent documentation structure solely for the review.
-
-If no persistence convention exists, return the Architecture Review in the template structure so the caller can persist or pass it downstream.
+Use the same path for the draft and final handoff, and report it to the user.
 
 The Architecture Review is a working analysis artifact. It is not authoritative repository documentation and does not prove that any recommendation was implemented.
+
+## Branch and task artifact path
+
+Resolve the repository root with `git rev-parse --show-toplevel` and preserve the original name from `git branch --show-current` in artifact metadata. Make `<branch-key>` lowercase with only letters, digits, and hyphens: replace unsupported characters, collapse repeated hyphens, and trim them. For detached HEAD use `detached-<short-sha>`. Outside Git, use the current working directory as root and `no-git` as the branch key; record the fallback.
+
+Reuse the current task ID when supplied or established by an existing discussion artifact. Otherwise generate `<YYYYMMDD-HHMM>-<short-review-slug>`. Normalize it with the same filesystem-safe rules and keep it stable for the review. Check collisions only in the current branch directory; suffix an ID when it belongs to another task. Never overwrite an unrelated artifact. Create the task directory when saving the first draft.
 
 ## Completion behavior
 
 End with a short decision-oriented summary:
 
+- the review artifact path and completion status;
 - the overall architectural health of the reviewed scope;
 - the highest-value candidate(s), if any;
 - important guardrail/documentation gaps;
@@ -185,4 +198,4 @@ If the architecture is already appropriate for the observed needs, say so. A val
 - Do not rank low-value cleanup above recurring high-cost architectural friction.
 - Do not create a refactoring backlog merely to make the repository look more structured or AI-friendly.
 - Do not claim exhaustive review coverage when evidence or access was limited.
-- Do not invent repository-specific artifact locations or permanent documentation conventions.
+- Do not create permanent repository documentation for the review.

@@ -1,13 +1,13 @@
 ---
 name: codebase-design
-description: "Advisory engineering skill for evaluating or shaping focused code design: modules, interfaces, seams, dependencies, testability, and change locality. Use when designing a new abstraction, comparing design alternatives, improving a specific class/module/package, placing a seam, reducing coupling, making code easier to test or navigate by AI, or reasoning about a planned refactoring. Work from provided code or a focused repository area and respect repository-specific constraints. Do not perform repository-wide architecture audits, implement refactors, or generate repository documentation."
+description: "Advisory engineering skill for focused code design: modules, interfaces, seams, dependencies, and testability. Investigate repository facts, resolve material design questions one at a time, and save a handoff for substantial decisions. Use for a new abstraction, a focused refactoring, or a hard-to-reverse design choice. Do not perform repository-wide architecture audits or implement refactors."
 ---
 
 # Codebase Design
 
 Use this skill as a reusable design lens for focused engineering decisions. Produce recommendations and trade-offs, not codebase modifications.
 
-Return the recommendation in the conversation by default. When the design is substantial enough to require downstream discussion, planning, or implementation in a separate context, optionally produce a persistent Design Recommendation handoff artifact.
+Return routine local recommendations in the conversation. For a substantial design decision that should survive the conversation, create a branch-scoped Design Recommendation handoff.
 
 ## Operating boundaries
 
@@ -34,6 +34,12 @@ Use these terms consistently when they clarify the discussion:
 - **Leverage**: how much capability multiple callers gain from learning and depending on one stable interface.
 
 Read `references/design-principles.md` when evaluating a non-trivial design or comparing alternatives.
+
+## Interaction and checkpointing
+
+Resolve design facts from the repository before asking the user. Ask only about material goals, constraints, or trade-offs that repository evidence cannot settle. Discuss one question at a time: explain why it matters, recommend an answer with reasons, and offer concise alternatives when useful. Wait for the answer before advancing to a dependent question. Do not deliver a completed recommendation with a list of user-resolvable questions.
+
+For a substantial decision meeting the handoff criteria below, create a compact `draft` artifact after the initial investigation. Record the problem, evidence pointers, provisional options, confirmed decisions, and next unresolved question if any. Report its path so another conversation can resume. Update it only when material evidence or a decision changes; do not repeatedly rewrite a full recommendation. Before marking it `complete`, summarize the recommendation and ask the user to confirm it. Record unavailable external evidence as a limitation with its effect on the recommendation; resolve user-answerable questions that materially affect it.
 
 ## Workflow
 
@@ -130,9 +136,9 @@ Keep the output decision-oriented. Include:
 
 If the current design is already appropriate, say so. Do not invent a refactoring opportunity.
 
-### 8. Persist the recommendation when useful
+### 8. Persist a substantial recommendation
 
-Keep the recommendation in the conversation by default.
+Keep routine local recommendations in the conversation.
 
 Produce a persistent Design Recommendation handoff when one or more of these apply:
 
@@ -148,20 +154,14 @@ decisions unless requested.
 
 When a persistent handoff is warranted:
 
-1. Read `references/design-recommendation-template.md`.
-2. Use its structure and semantics as the stable Design Recommendation contract.
-3. Record the final recommendation and material reasoning, not the full exploration history.
-4. Keep the artifact concise enough for a downstream agent or human to consume without reconstructing the original conversation.
+1. Save the compact draft after initial investigation at `<repository-root>/.codex-tasks/branches/<branch-key>/<task-id>/design-recommendation.md`.
+2. After the user confirms the conclusion, read `references/design-recommendation-template.md` and expand the same artifact into the complete handoff.
+3. Record the final recommendation, confirmed decisions, and material reasoning, not the full exploration history.
+4. Keep it concise enough for a downstream agent or human to consume without reconstructing the original conversation. Report the path and status.
 
-When repository context is available:
+Resolve the repository root with `git rev-parse --show-toplevel` and preserve the original name from `git branch --show-current` in artifact metadata. Make `<branch-key>` lowercase with only letters, digits, and hyphens: replace unsupported characters, collapse repeated hyphens, and trim them. For detached HEAD use `detached-<short-sha>`. Outside Git, use the current working directory as root and `no-git` as the branch key; record the fallback.
 
-- Prefer an existing repository convention for temporary task, design, or working artifacts.
-- Do not assume a particular directory or filename.
-- Do not create a new permanent documentation structure solely for this recommendation.
-
-When no persistence convention is available, return the Design Recommendation in
-the template structure so that the caller can persist or pass it to a downstream
-workflow.
+Reuse the current task ID when supplied or established by an existing discussion artifact. Otherwise generate `<YYYYMMDD-HHMM>-<short-design-slug>`. Normalize it with the same filesystem-safe rules and keep it stable. Check collisions only in the current branch directory; suffix an ID when it belongs to another task. Never overwrite an unrelated artifact. Create the task directory when saving the first draft.
 
 A Design Recommendation is a working handoff. It is not authoritative repository
 documentation and must not be treated as proof that the proposed design was
@@ -178,4 +178,4 @@ implemented.
 - Do not optimize for maximum abstraction. Prefer the smallest design that meaningfully improves locality, leverage, or testability.
 - Do not create persistent Design Recommendations for routine local decisions unless requested or a downstream handoff clearly benefits from one.
 - Do not treat a Design Recommendation as permanent repository documentation, an implementation plan, or authorization to modify production code.
-- Do not invent repository-specific artifact locations or documentation conventions when the repository does not define them.
+- Do not create permanent repository documentation for a design handoff.

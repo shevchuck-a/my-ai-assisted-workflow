@@ -14,6 +14,7 @@ not the full exploration history.
 The following sections form the stable handoff contract and should normally be
 present:
 
+- Metadata
 - Problem
 - Design Drivers
 - Recommendation
@@ -27,6 +28,7 @@ downstream information:
 
 - Current Shape
 - Alternatives Considered
+- Confirmed Design Decisions
 - Open Questions
 
 Do not invent alternatives, risks, constraints, or open questions merely to fill
@@ -38,6 +40,20 @@ discovered from the repository context.
 ---
 
 # Design Recommendation
+
+## Metadata
+
+- Task ID: <task-id>
+- Repository root: <absolute path>
+- Branch: <original branch name, detached HEAD, or non-Git fallback>
+- Branch key: <branch-key>
+- Status: `complete`
+- Updated: <ISO-8601 timestamp>
+- Artifact path: <path to this file>
+
+For a draft, use `Status: draft` and record only the problem, evidence pointers,
+provisional options, confirmed decisions, and next unresolved question needed
+to resume. Expand the full template after the user confirms the conclusion.
 
 ## Problem
 
@@ -149,10 +165,17 @@ when useful, such as:
 
 Do not turn this section into an implementation checklist.
 
+## Confirmed Design Decisions
+
+Record user choices that materially shaped the recommendation, with brief
+rationale and their effect on the design. Omit when none were needed.
+
 ## Open Questions
 
-List unresolved design questions that downstream discussion or implementation
-must address.
+List only questions requiring evidence unavailable during this design work.
+State how each limits confidence or affects the next step. Resolve
+user-answerable questions that materially affect the recommendation before
+marking the handoff complete.
 
 Do not include implementation details that can safely be decided during normal
 delivery work.

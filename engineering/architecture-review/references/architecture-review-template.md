@@ -4,16 +4,18 @@ Use this template as a stable handoff contract for a substantive architecture re
 
 Keep the artifact evidence-oriented and decision-oriented. Preserve conclusions, supporting evidence, and prioritization; do not reproduce the full exploration history.
 
-The review is a working analysis artifact. It is not authoritative repository documentation, a detailed target design, or an implementation plan.
+The review is a working analysis artifact. It is not authoritative repository documentation, a detailed target design, or an implementation plan. Use a compact `draft` checkpoint during discussion; expand it into this template only after the user confirms the conclusions.
 
 ## Contents
 
 - Stability rules
+- Metadata
 - Scope
 - Repository Model
 - Executive Summary
 - Findings
 - Prioritized Improvement Candidates
+- Confirmed Review Decisions
 - Cross-Cutting Guardrail Gaps
 - Documentation Gaps
 - Areas Intentionally Left Alone
@@ -23,6 +25,7 @@ The review is a working analysis artifact. It is not authoritative repository do
 
 The following sections form the stable handoff contract and should normally be present:
 
+- Metadata
 - Scope
 - Repository Model
 - Executive Summary
@@ -34,6 +37,7 @@ The following sections may be omitted when they contain no material information:
 
 - Cross-Cutting Guardrail Gaps
 - Documentation Gaps
+- Confirmed Review Decisions
 - Open Questions
 
 Do not invent findings, candidates, gaps, or open questions to fill the template.
@@ -41,6 +45,18 @@ Do not invent findings, candidates, gaps, or open questions to fill the template
 ---
 
 # Architecture Review
+
+## Metadata
+
+- Status: `complete`
+- Task ID: <task-id>
+- Repository root: <absolute path>
+- Branch: <original branch name, detached HEAD, or non-Git fallback>
+- Branch key: <branch-key>
+- Reviewed at: <ISO-8601 timestamp>
+- Artifact path: <path to this file>
+
+For a draft, use `Status: draft` and only the scope, evidence pointers, provisional conclusions, resolved decisions, and next unresolved question needed to resume. Do not fill the full template until completion.
 
 ## Scope
 
@@ -119,6 +135,10 @@ State meaningful disruption, compatibility concerns, or uncertainty.
 **Suggested next step**
 Choose the appropriate next activity, such as focused design, task discussion/planning, adding an executable guardrail, or synchronizing documentation.
 
+## Confirmed Review Decisions
+
+Record user decisions that materially shaped the findings, priorities, or recommended next step. Include the choice, brief rationale, and its effect on the review. Omit this section when no such decisions were needed. Do not reproduce the question-and-answer transcript.
+
 ## Cross-Cutting Guardrail Gaps
 
 List important architectural invariants that are reasonable but insufficiently enforced.
@@ -151,7 +171,7 @@ Keep this selective; do not inventory every acceptable part of the repository.
 
 ## Open Questions
 
-List unresolved architecture questions that materially affect prioritization or the next design step.
+List only questions requiring evidence unavailable during this review. State how each limits confidence or affects the next step. Resolve user-answerable questions that materially affect the conclusions before marking the review complete.
 
 Do not include routine implementation details that can be resolved during delivery.
 
