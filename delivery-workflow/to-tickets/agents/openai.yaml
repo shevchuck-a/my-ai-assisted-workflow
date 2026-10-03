@@ -1,7 +1,7 @@
 interface:
   display_name: "02 - To Tickets"
-  short_description: "Turn an agreed task into local implementation tickets"
+  short_description: "Split tasks standalone or after discussion confirmation"
 
 policy:
+  # Automatic handoff is explicitly instructed; implicit invocation stays disabled.
   allow_implicit_invocation: false
-  

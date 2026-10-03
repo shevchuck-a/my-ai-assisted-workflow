@@ -1,6 +1,6 @@
 ---
 name: task-discussion
-description: Interview the user interactively to reach a shared understanding of a coding or repository task before planning or implementation. Use when requirements are incomplete, ambiguous, risky, or contain meaningful implementation choices. Explore the repository to resolve facts, ask one implementation-relevant decision at a time with a recommended answer, and after explicit user confirmation write a structured discussion artifact under the current branch at .codex-tasks/branches/{branch-key}/{task-id}/discussion.md. Do not modify product code or begin implementation.
+description: Interview the user interactively to reach a shared understanding of a coding or repository task before planning or implementation. Use when requirements are incomplete, ambiguous, risky, or contain meaningful implementation choices. Explore the repository to resolve facts, ask one implementation-relevant decision at a time with a recommended answer, and after explicit user confirmation write a structured discussion artifact under the current branch at .codex-tasks/branches/{branch-key}/{task-id}/discussion.md. After confirmation, return bounded tasks for direct implementation or delegate ticket generation for larger or uncertain scopes. Do not modify product code or begin implementation.
 ---
 
 # Task Discussion
@@ -112,7 +112,7 @@ Do not repeat a question that the user has already answered directly or indirect
 8. Continue until no implementation-relevant decisions remain unresolved.
 9. Summarize the shared understanding concisely.
 10. Ask the user to confirm that the shared understanding is complete.
-11. Only after explicit confirmation, create the discussion artifact.
+11. Only after explicit confirmation, save the discussion artifact, then perform the post-confirmation handoff below. For a confirmed revision, update the same artifact and align its generated tickets.
 
 If new repository evidence invalidates an earlier assumption or decision context, explain the conflict and ask the user to revisit only the affected decision.
 
@@ -120,11 +120,11 @@ If new repository evidence invalidates an earlier assumption or decision context
 
 Do not modify product code, configuration, tests, pipelines, or external systems during this skill.
 
-Do not begin implementation planning or implementation.
+Do not begin implementation planning or implementation during the interview. After confirmation, only the scope assessment and delegated ticket decomposition described below are allowed; never start implementation.
 
 Do not create the final artifact until the user explicitly confirms that shared understanding has been reached.
 
-Creating the confirmed discussion artifact is the only allowed write operation, apart from creating its parent directory.
+Allowed writes are the confirmed discussion artifact and its parent directory, its resulting recommendation, and generation or alignment of its own tickets after confirmation. Ticket drafting belongs exclusively to the delegated worker. When a confirmed revision becomes bounded, the discussion agent may remove its prior generated tickets as described below. Never modify unrelated task artifacts.
 
 ## ## Branch, task ID, and artifact path
 
@@ -228,19 +228,53 @@ Write `discussion.md` with this structure:
 
 ## Recommended Next Step
 
-If this confirmed task is one bounded implementation outcome, implement it directly from this discussion artifact with `implement-ticket`.
-
-If the task contains multiple independently implementable outcomes or needs dependency-aware decomposition, create tickets from this discussion artifact with `to-tickets`.
+<After the post-confirmation handoff, record the actual result: direct `implement-ticket` invocation using this exact discussion path for a bounded task; the recommended generated ticket path for a completed breakdown; or incomplete generation/alignment and an exact manual `to-tickets` invocation using this discussion path.>
 
 Do not reinterpret confirmed decisions without returning to the user.
 ```
 
 Use `None` explicitly for empty sections. Do not omit sections silently.
 
+## Post-confirmation scope assessment and handoff
+
+Confirmation authorizes decomposition within the saved scope and alignment of tickets generated from it, including replacement of edited tickets or statuses and removal of obsolete tickets. No separate breakdown or replacement approval is needed for this automatic handoff. It does not authorize implementation.
+
+After saving each confirmed discussion or revision:
+
+1. Assess boundedness using the existing `implement-ticket` scope gate and already established findings. Direct implementation is suitable when there is one primary behavioral outcome, clear requirements, one coherent code area, no missing product, architectural, migration, or risk decision, and safe review without decomposition. Multiple independent outcomes, several subsystems, broad refactoring, or more than about five production files for unrelated reasons suggest decomposition. File count is a qualified signal: an explicitly named atomic mechanical change may involve more files.
+2. If clearly bounded, skip `to-tickets`. On a confirmed revision, remove previous generated tickets for this discussion only. Identify them by their source metadata resolving to this exact discussion and the existing numbered ticket format inside this task's `tickets/` directory; never delete unrelated files or the directory wholesale. If ownership is unclear, leave those files untouched and report alignment as incomplete. Return the discussion as the implementation input with a brief boundedness explanation.
+3. If decomposition is needed or boundedness is uncertain, explicitly instruct exactly one ticket subagent to apply `to-tickets`. Do not inherit conversation history: use `fork_turns="none"` when available, or an equivalent context-isolated capability. If isolation or delegation is unavailable, use the failure behavior below. An uncertain scope may produce one ticket.
+4. Give the child only the exact saved discussion path, the exact local `to-tickets/SKILL.md` path and instructions to read it, and the automatic invocation contract below. Resolve that skill path from this skill's real filesystem location (following installation symlinks) and its sibling `to-tickets` directory; do not rely on implicit invocation. Keep `allow_implicit_invocation: false` in both skills' metadata.
+5. Consume the compact child result without repeating repository investigation, reviewing the decomposition a second time, or rereading every ticket. Update the discussion's `Recommended Next Step` to reflect the actual result. Never begin implementation.
+
+### Automatic invocation contract
+
+The child must:
+
+- read the saved confirmed discussion as its complete primary input;
+- apply `to-tickets` with automatic generation/alignment authorization from discussion confirmation;
+- reuse confirmed repository findings and perform only targeted investigation needed for realistic slices;
+- use the existing decomposition logic, decision traceability, self-contained context, and ticket template;
+- skip standalone proposal approval and replacement approval, while retaining unresolved material decisions as blockers;
+- align existing generated tickets with the current confirmed scope, removing obsolete generated tickets only within this discussion's task directory and source-matched generated set; preserve unrelated artifacts;
+- use no subagents and return no full ticket contents;
+- report completion or incomplete generation/alignment, the discussion path, every generated ticket path with a short description and blocking dependencies, immediately available tickets, and the recommended starting ticket; include a concise reason for any blocker or failure.
+
+### Failure behavior
+
+If delegation is unavailable, lacks context isolation, or fails, preserve the confirmed discussion. Do not generate tickets in the main discussion agent or launch a replacement child. Clearly report ticket generation/alignment as incomplete, including any known partial or stale tickets, and provide the exact recovery command:
+
+`$to-tickets <exact-saved-discussion-path>`
+
+A missing material decision also means the handoff is incomplete: surface the child's specific decision question to the user without silently choosing an answer. A manual retry follows standalone `to-tickets` approval rules. Do not imply that existing tickets are fully aligned when the child did not confirm completion.
+
 ## Completion response
 
-After writing the artifact:
+After the handoff:
 
-- report the exact artifact path;
+- report the exact discussion artifact path;
+- for a bounded task, briefly explain suitability for direct implementation and provide `$implement-ticket implement <exact-discussion-path>`;
+- for completed decomposition, list every ticket path with a short description and blocking dependencies, identify immediately available tickets, and recommend the starting ticket;
+- for incomplete generation or alignment, report the blocker and exact manual recovery invocation;
 - state that no implementation changes were made;
-- stop unless the user explicitly asks for the next step.
+- stop; implementation requires a separate explicit user request.

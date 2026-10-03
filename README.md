@@ -14,13 +14,29 @@ as one skill.
 ### Delivery Workflow
 
 - `task-discussion` — clarify a coding task interactively and record an agreed
-  branch-scoped discussion before planning or implementation.
+  branch-scoped discussion. After confirmation, return bounded work for direct
+  implementation or automatically delegate larger or uncertain scopes to one
+  context-isolated ticket worker.
 - `to-tickets` — split an approved task definition into small, implementation-
-  ready tickets with dependencies and acceptance criteria.
+  ready tickets with dependencies and acceptance criteria. Standalone use asks
+  for breakdown approval; the explicit discussion handoff uses confirmation
+  as authorization for generation and alignment.
 - `implement-ticket` — implement one bounded coding change from a direct
   request, approved discussion, or local ticket.
 - `code-review` — independently review local changes, a branch diff, or a pull
   request for defects, regressions, security issues, and requirement gaps.
+
+After each confirmed discussion revision, generated tickets are aligned with the
+new scope, including removal of obsolete tickets. If the revised task becomes
+bounded, its previous generated tickets are removed and the discussion becomes
+the implementation input. Alignment is limited to that discussion's generated
+tickets; unrelated artifacts are preserved.
+
+The handoff returns exact artifact paths, compact ticket descriptions,
+dependencies, and a recommended starting ticket. If isolated delegation is
+unavailable or fails, the confirmed discussion is preserved, incomplete ticket
+generation or alignment is reported, and an exact `$to-tickets <discussion-path>`
+manual retry is provided. Implementation always requires a separate request.
 
 ### Engineering
 
