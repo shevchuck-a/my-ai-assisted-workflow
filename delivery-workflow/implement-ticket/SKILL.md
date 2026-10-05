@@ -153,6 +153,7 @@ Use the following default budget for a bounded task:
 - when test-first applies, one focused test edit and RED execution;
 - one focused production implementation call;
 - one GREEN execution and combined final verification call;
+- required repository-approved automatic checks, whether or not test-first applies;
 - at most one focused correction and re-verification cycle.
 
 Target roughly 8-12 tool calls for a test-first task and fewer when automated tests are not required. Keep no more than two repository-inspection rounds before the first edit.
@@ -170,6 +171,8 @@ Before exceeding 12 tool calls or starting a third inspection round, choose one 
 Do not exceed the budget merely to gain confidence through repeated reading. An extra call must answer one named unresolved question and must use bounded output.
 
 Do not sacrifice correctness to meet the budget, but prefer a focused stop over open-ended exploration.
+
+Do not skip required automatic verification to meet a tool-call target. Batch independent checks where practical and keep any correction focused on task-induced failures.
 
 ## Context-efficient workflow
 
@@ -202,6 +205,8 @@ For a ticket, read only:
 Do not load all `.codex-tasks` artifacts, all tickets, all instructions, or the full repository.
 
 Do not reread unchanged content already present in the conversation or returned by a prior command.
+
+Identify the applicable repository automatic-verification policy and command pointers in repository instructions. Inspect the named scripts, configuration, discovery rules, fixtures, and lifecycle hooks only as needed to establish command scope before execution. A command name or unit-test label alone is not evidence of isolation; aggregate commands must not indirectly launch manual-default suites.
 
 For discussion input, start repository inspection from the `Repository Findings` already recorded by the approved artifact.
 
@@ -315,13 +320,23 @@ If a patch fails:
 RED and GREEN executions performed by the test-first workflow are part of
 implementation and do not count as redundant verification.
 
-After implementation reaches GREEN, run the remaining authorized final checks
-once.
+After implementation (and GREEN when test-first applies), run the applicable
+repository-approved automatic checks before reporting completion. Run remaining
+checks once; a completed RED/GREEN run can satisfy the same required check when
+its scope and final code state match the repository policy.
 
 - `git status --short`;
 - `git diff --stat`;
 - `git diff --check`;
-- narrowly scoped static checks allowed by this skill.
+- narrowly scoped static checks allowed by this skill;
+- the static checks and isolated local unit tests required by the applicable
+  repository automatic-verification policy, subject to the execution boundaries
+  below.
+
+Without a documented automatic-verification policy, run only identifiable static
+checks. Report that automatic unit-test execution needs a documented unit-only
+command. If command scope is unclear or prerequisites or permissions prevent a
+required check, report it as blocked rather than claiming it passed.
 
 Inspect the final diff only for files changed by the task.
 
@@ -357,6 +372,9 @@ Generic requests such as `verify the change`, `check coverage`, repository
 conventions, or an acceptance criterion that merely describes behavior do not
 by themselves authorize creating new automated tests.
 
+Repository authorization to execute existing unit tests does not authorize
+creating or expanding coverage and does not impose test-first development.
+
 When automated tests are explicitly in scope:
 
 - create or update only the tests needed to express the requested behavior;
@@ -373,8 +391,17 @@ requires another implementation strategy.
 
 ## Runtime verification policy
 
-By default, do not execute project code. Run only narrowly scoped static
-checks unless one of the explicit exceptions below applies.
+Automatically run repository-approved static checks and isolated local unit
+tests under a documented repository automatic-verification policy. This policy
+is standing authorization for local unit-test execution only after static
+inspection establishes isolation. Without it, run only identifiable static
+checks and report the missing documented unit-only command.
+
+Keep API, UI, Playwright E2E, and integration tests manual by default, even when
+the task changes those tests or their framework. Run them only when the user
+explicitly authorizes their execution for this particular task. A generic
+verification expectation in a ticket or discussion is not such authorization.
+Repository instructions do not override environment permission requirements.
 
 Allowed static checks include:
 
@@ -388,6 +415,9 @@ Allowed static checks include:
 
 ### Automated test exception
 
+Documented repository policy authorizes its existing isolated local unit tests
+as automatic final verification independently of test creation or TDD.
+
 The selected primary input may authorize local automated test execution when
 it explicitly:
 
@@ -396,13 +426,16 @@ it explicitly:
   verification.
 
 A confirmed discussion artifact or approved ticket selected as the primary
-implementation input counts as authorization for this narrow exception.
+implementation input counts as authorization for this narrow exception only
+within these execution boundaries. Manual-default categories still require
+explicit per-task user authorization.
 
 When this exception applies, run only:
 
 - the smallest focused test needed to establish RED;
 - the same focused test needed to establish GREEN;
-- the final automated test scope explicitly required by the selected input.
+- the final automated test scope explicitly required by the selected input;
+- existing isolated local unit tests required by documented repository policy.
 
 If the selected input requires automated tests but does not name the exact
 test command, resolve the established repository test command from repository
@@ -418,22 +451,29 @@ This exception does not authorize:
 - tests requiring credentials or stateful remote dependencies;
 - deployment or pipeline execution.
 
-Those actions still require explicit authorization in the current task unless
-the selected primary input specifically and safely authorizes them.
+Those actions still require explicit user authorization for the particular task;
+the selected primary input may record that specific authorization. Check actual
+command scope, including aggregate scripts, discovery/imports, fixtures, and
+hooks, before running it. Do not run a mixed command under unit-test authorization
+when it can trigger excluded behavior; use a documented isolated command or
+report the check as blocked.
 
 Do not expand a targeted RED/GREEN run into unrelated runtime verification.
+Still run the remaining automatic checks required by repository policy.
 
-When an authorized test fails:
+When an authorized verification check fails:
 
 - distinguish an expected RED failure from infrastructure or unrelated
   failures;
 - fix regressions caused by the current task;
+- rerun affected checks after bounded corrections, including static-check failures;
 - report unrelated pre-existing failures without expanding scope;
+- report environment or permission blockers and pending manual verification;
 - do not weaken or suppress tests merely to obtain GREEN.
 
 ## Follow-up fixes
 
-When practical, keep bounded verification feedback and corrections for the selected ticket in the same implementation conversation. Treat the ticket lifecycle as implementation -> user verification -> bounded correction until the selected behavior is accepted or a new product/architectural decision is required.
+When practical, keep bounded verification feedback and corrections for the selected ticket in the same implementation conversation. Treat the ticket lifecycle as implementation -> automatic verification -> pending manual/user verification -> bounded correction until the selected behavior is accepted or a new product/architectural decision is required.
 
 Never continue into the next ticket merely because the current implementation is code-complete.
 
@@ -454,6 +494,7 @@ Before declaring completion, confirm:
 - only intended files and areas changed;
 - unrelated user changes remain preserved;
 - static-check results are reported accurately;
+- required automatic checks ran, or their failures and blockers are explicitly reported;
 - authorized automated test execution is reported accurately, and other runtime checks are reported as not run unless separately authorized;
 - no secrets, generated junk, debug output, or unrelated cleanup were added;
 - the design remains proportional to the task.
@@ -491,7 +532,9 @@ Report concisely:
 - when test-first applied, the RED result and why it was the expected failure;
 - the corresponding GREEN result;
 - final automated and static checks performed and their results;
+- distinguish task-induced failures, unrelated failures, and environment or permission blockers;
 - runtime checks not authorized or not run;
+- pending manual verification, explicitly labeled as unexecuted;
 - blockers or remaining work;
 - recommended git commit message.
 

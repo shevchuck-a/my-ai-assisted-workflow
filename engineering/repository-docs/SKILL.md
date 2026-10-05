@@ -83,6 +83,12 @@ Look for relevant evidence such as:
 
 Do not assume specific filenames.
 
+For verification guidance, discover exact commands, working directories, prerequisites,
+and existing execution permissions separately. Statically inspect scripts, configuration,
+test discovery/imports, fixtures, aggregate commands, and lifecycle hooks to establish
+actual scope. Command availability or a unit-test label alone does not authorize
+execution or establish isolation.
+
 ### 2. Build a factual repository model
 
 Understand only what is needed for the requested documentation scope.
@@ -100,6 +106,15 @@ Identify relevant:
 - historical decisions that explain non-obvious current structure.
 
 Prefer direct repository evidence over inference. Mark uncertainty explicitly.
+
+Separate available verification mechanisms from intended execution policy. Use
+confirmed user intent to establish or maintain automatic repository-approved static
+checks and isolated local unit tests. Keep API, UI, Playwright E2E, and integration
+tests manual by default, including when those tests or their framework change;
+execution requires explicit user authorization for the particular task. Do not
+invent a unit-only command or claim isolation when configuration does not support it.
+Without documented automatic-verification policy, agents run only identifiable
+static checks and report the missing documented unit-only command.
 
 ### 3. Map the documentation system
 
@@ -182,6 +197,16 @@ Keep explanatory AI context distinct from operating instructions.
 
 Agent operating instructions should focus on **how an agent should work in the relevant scope**: what to inspect, which rules apply, what to verify, and where deeper context lives.
 
+Record confirmed repository-specific execution policy in the appropriate existing
+root or scoped instructions, with pointers to authoritative command guidance. State
+which checks agents must run automatically and which remain manual; include exact
+commands, working directories, prerequisites, and scope evidence or concise pointers
+to them. Mixed aggregate commands cannot serve as automatic unit verification when
+they trigger manual suites. Keep execution of existing tests separate from permission
+to create coverage or choose TDD. Require reporting task-induced failures, unrelated
+failures, environment or permission blockers, and pending manual verification.
+Repository policy cannot override environment permission requirements.
+
 Do not duplicate long human-oriented explanations into AI context. Do not reduce AI context to useless pointers that force loading large documents for every task.
 
 ### 8. Reconcile dual-audience knowledge
@@ -221,6 +246,11 @@ Verify as applicable:
 - temporary design or task artifacts were not mistaken for implemented truth.
 
 If a conflict cannot be resolved from repository evidence and user intent, ask a targeted question rather than guessing.
+
+Validate verification documentation through static inspection. Confirm that commands
+and their hooks match documented automatic/manual categories and authorization.
+Documentation validation does not itself authorize application tests, services, or
+other runtime execution; keep unexecuted checks explicit.
 
 ### 10. Report the result
 

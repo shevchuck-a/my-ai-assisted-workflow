@@ -74,7 +74,11 @@ Typical content:
 - when unit, behavioral, property, contract, integration, or end-to-end tests are appropriate;
 - bug-fix regression expectations;
 - expensive or environment-dependent test guidance;
-- pointers to executable commands.
+- pointers to executable commands;
+- exact commands, working directories, prerequisites, and their actual scope;
+- automatic agent-run static checks and isolated local unit tests versus manual
+  API, UI, Playwright E2E, and integration tests;
+- explicit per-task authorization for manual tests, separately from availability.
 
 Do not invent testing policy that the repository or user has not established.
 
@@ -89,7 +93,13 @@ Typical content:
 - regression expectations;
 - constraints around external dependencies;
 - fast versus full verification pointers;
-- explicit cases where adding tests would be inappropriate overhead.
+- explicit cases where adding tests would be inappropriate overhead;
+- pointers to documented automatic-verification policy and unit-only commands;
+- scope checks for aggregate scripts, discovery/imports, fixtures, and hooks;
+- static-only fallback when automatic policy is missing, with the missing
+  documented unit-only command reported;
+- execution authorization kept separate from coverage creation and TDD;
+- task-induced versus unrelated failures, blockers, and pending manual verification.
 
 Prefer actionable rules over testing theory.
 
@@ -103,9 +113,14 @@ Typical content:
 - setup flow;
 - common run/build commands;
 - fast and full verification paths;
+- exact verification commands, working directories, prerequisites, and categories,
+  linked to the authoritative agent execution policy;
 - contribution workflow when repository-specific.
 
 Commands should be grounded in actual scripts/configuration, not manually invented alternatives.
+
+Validate command scope statically; documenting an available command does not authorize
+its execution. A fast or unit label does not prove isolation from manual suites.
 
 ## 7. Repository map
 
@@ -144,6 +159,11 @@ Typical content:
 - required context pointers;
 - repository-wide constraints;
 - verification expectations;
+- automatic-verification policy: required static checks and isolated local unit
+  tests, with command pointers, working directories, and prerequisites;
+- manual API/UI/Playwright E2E/integration execution requiring explicit per-task
+  user authorization, even when changing those tests or their framework;
+- no-policy static-only fallback and reporting of missing unit-only authorization;
 - escalation or ambiguity rules;
 - links to compact AI context.
 
@@ -158,7 +178,9 @@ Typical content:
 - only the local differences from root behavior;
 - local context pointers;
 - subsystem-specific constraints;
-- local verification requirements.
+- local verification requirements;
+- scoped automatic/manual categories, command pointers, working directories,
+  prerequisites, and authorization where they differ from root policy.
 
 Do not create scoped instruction files for every directory when inherited rules are sufficient.
 
