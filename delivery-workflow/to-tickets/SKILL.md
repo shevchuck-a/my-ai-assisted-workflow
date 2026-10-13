@@ -1,6 +1,6 @@
 ---
 name: to-tickets
-description: Break an approved task discussion, specification, plan, or current coding-task conversation into small tracer-bullet implementation tickets with explicit blocking dependencies, acceptance criteria, decision traceability, and the minimum confirmed repository context needed for a fresh implementation agent. Use when the user wants an implementation-ready ticket breakdown saved under the same branch-scoped .codex-tasks task directory as its source discussion. Also support an explicit context-isolated task-discussion handoff after confirmation, without separate breakdown approval. Do not implement the tickets or modify product code.
+description: Break an approved task discussion, specification, plan, or current coding-task conversation into small tracer-bullet implementation tickets with explicit blocking dependencies, acceptance criteria, decision traceability, and the minimum confirmed repository context needed for a fresh implementation agent, plus a compact source-linked execution record. Use when the user wants an implementation-ready ticket breakdown saved under the same branch-scoped .codex-tasks task directory as its source discussion. Also support an explicit context-isolated task-discussion handoff after confirmation, without separate breakdown approval. Do not implement the tickets or modify product code.
 ---
 
 # To Tickets
@@ -40,7 +40,7 @@ Do not search other branch directories and do not choose the newest task automat
 
 ## Invocation modes
 
-Standalone invocation retains proposal approval and approval before replacing existing ticket files.
+Standalone invocation retains proposal approval and approval before replacing existing generated tickets or their execution record. Include the execution record in the proposed output and replacement scope.
 
 Automatic invocation applies only when `task-discussion` explicitly delegates this skill with the exact saved confirmed discussion path and authorization to generate or align its tickets. Discussion confirmation authorizes that breakdown and synchronization without another proposal or replacement approval. This exception does not apply merely because the source status is `confirmed`, or because a standalone invocation supplies a discussion path.
 
@@ -202,7 +202,7 @@ In standalone mode, revise the proposal until the user explicitly approves it.
 
 In standalone mode, do not write ticket files before approval.
 
-### 9. Write approved ticket files
+### 9. Write approved tickets and execution record
 
 Create:
 
@@ -220,13 +220,44 @@ Number tickets from `01` in dependency order, blockers first.
 
 Do not create one combined ticket document. Do not overwrite unrelated existing tickets.
 
-In standalone mode, if the target directory already contains ticket files, stop and ask whether to replace them or create a revised set. Do not silently overwrite them.
+In standalone mode, if the target directory already contains ticket files or the task has an execution record, stop and ask whether to replace them or create a revised set. Do not silently overwrite them.
 
 In automatic mode, align the generated set with the current confirmed discussion without replacement approval, including replacing ticket edits or statuses and removing obsolete generated tickets. Identify existing generated tickets by source metadata resolving to the exact discussion and the existing numbered ticket format within this task's `tickets/` directory. Never overwrite or remove unrelated files, search other task directories, or delete the directory wholesale. If ownership is unclear or a proposed path collides with an unrelated file, preserve it and return an incomplete alignment with the conflict.
 
-Prepare the complete new set and check decision coverage and dependencies before modifying existing generated files. Remove obsolete source-matched tickets after writing the replacement set. If writing or cleanup fails, report incomplete generation/alignment and known partial or stale paths; do not claim the tickets are fully aligned.
+Prepare the complete new ticket set and execution record before modifying existing generated files. Check decision coverage, genuine dependencies, and the execution metadata against the proposed tickets. Require unique identities and paths, resolvable blockers, and an acyclic dependency graph; every ticket must have exactly one execution row and every row must name a ticket in this set. An earlier number alone is never a blocker.
+
+An existing execution record is owned only when its source, repository, branch scope, and task identity match this generated set. Preserve unrelated or ambiguously owned records and report a collision as incomplete alignment. Before modifying an owned set, mark its existing execution record's alignment `incomplete`; if that write fails, stop before changing tickets. Write the replacement tickets, then remove obsolete source-matched tickets, then write the execution record last. Mark it `complete` only after successful ticket writes and cleanup, and validate the saved paths, definition hashes, and blockers against the actual saved ticket set before claiming completion. If any write, cleanup, or read-back validation fails, leave or mark the owned record `incomplete` when possible and report the exact known partial/stale ticket and execution-record paths. If marking fails too, explicitly report the old record as stale; never present it as usable aligned progress. Do not remove unrelated files or directories wholesale.
 
 When the primary source is the task discussion at `../discussion.md` relative to the ticket directory, record that stable relative source path in each ticket. When the source is elsewhere, record the actual source path only if it is a stable local artifact; otherwise use a concise source description.
+
+## Compact execution record
+
+Both approved standalone generation and explicitly authorized automatic decomposition create `<task-directory>/execution.md`, beside `discussion.md` when that is the source. For other supported inputs, use the same resolved branch-scoped task directory and the actual stable source path or confirmed source description; do not invent a discussion artifact.
+
+`to-tickets` owns generation and alignment of this record. A later, separately requested implementation parent owns progress and commit-reference updates. Creating the record never authorizes implementation. Keep scheduling facts here and implementation details in the tickets; do not create separate detailed result artifacts.
+
+Use this compact structure, with paths relative to the execution record and an exact resolved source path in the handoff:
+
+```markdown
+# Execution - <task-id>
+
+**Source:** <./discussion.md or actual stable source path/confirmed description>
+**Repository:** <absolute Git repository root>
+**Branch:** <exact Git branch name>
+**Branch key:** <source task's branch directory key>
+**Task:** <task-id>
+**Alignment:** complete
+
+| Ticket | Path | Definition SHA-256 | Blocked by | Progress | Commit refs | Reconciliation evidence |
+| --- | --- | --- | --- | --- | --- | --- |
+| 01 - <title> | tickets/01-<slug>.md | <full definition hash> | None | pending | None | None |
+```
+
+- Ticket identity consists of its number, exact path, and definition hash; a reused number is not proof of the same specification. Include every genuine blocker by ticket number, or `None`, so a parent can identify pending tickets whose blockers are completed without loading ticket bodies or the entire discussion. An incomplete or stale record is not a scheduling input.
+- Compute each definition hash as SHA-256 of the ticket's UTF-8 text with CRLF/CR normalized to LF and only its single `**Status:** ...` line in the metadata block before `## Context` (including its terminating newline, if present) removed. Retain all other content, including source, blockers, acceptance criteria, verification, and formatting. Reject missing or duplicate status metadata in that block. Do not hash progress, commit refs, or this execution record into the ticket definition. A status-only ticket update leaves its definition identity unchanged.
+- Initialize progress to `pending`, with commit refs and reconciliation evidence `None`. Progress may later be `in-progress`, `completed`, or `blocked`; ticket specification status remains a separate field. Commit refs must be actual Git commit IDs in this repository, never invented hashes or local artifact paths. `.codex-tasks` records are local workflow artifacts and cannot substitute for Git evidence.
+- On regenerated or revised specifications, default to resetting progress, commit refs, and reconciliation evidence. Never retain obsolete completion merely because numbers or paths match. Carry unchanged definitions' progress forward only through explicit reconciliation: verify the same definition hash, confirm that the ticket still covers the revised confirmed source, and record concise evidence with verified Git commit references for retained completion. Changed definitions and tickets transitively depending on invalidated completion must be reset. If reconciliation evidence is unavailable, reset rather than guess. Removed tickets have no rows in the new record.
+- Ordinary implementation progress/status updates preserve the definition hashes and do not count as specification revisions. Alignment checks still compare hashes and dependencies with the actual ticket files; status-only edits do not require invalidating completion.
 
 ## Ticket Template
 
@@ -293,10 +324,11 @@ After writing the files, report:
 - output directory;
 - ticket count;
 - exact source discussion path, when applicable;
+- exact execution-record path and whether ticket/record generation and alignment completed;
 - every generated ticket path with a short description and blocking dependencies;
 - tickets that can start immediately;
 - the recommended first ticket.
 
-In automatic mode, return this compact handoff to the parent without full ticket contents or another review request. Explicitly distinguish completed generation/alignment from an incomplete result, and include the specific blocker or failure and any known partial or stale paths when incomplete.
+In either mode, explicitly distinguish completed ticket and execution-record generation/alignment from an incomplete result. Include the specific blocker or failure and every known partial or stale ticket/record path when incomplete; distinguish an intended output path from a successfully saved artifact. In automatic mode, return this compact handoff to the parent without full ticket contents or another review request.
 
 Do not implement any ticket. The next step must be explicitly initiated by the user in a separate implementation request or chat.

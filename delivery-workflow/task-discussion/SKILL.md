@@ -1,6 +1,6 @@
 ---
 name: task-discussion
-description: Interview the user interactively to reach a shared understanding of a coding or repository task before planning or implementation. Use when requirements are incomplete, ambiguous, risky, or contain meaningful implementation choices. Explore the repository to resolve facts, ask one implementation-relevant decision at a time with a recommended answer, and after explicit user confirmation write a structured discussion artifact under the current branch at .codex-tasks/branches/{branch-key}/{task-id}/discussion.md. After confirmation, return bounded tasks for direct implementation or delegate ticket generation for larger or uncertain scopes. Do not modify product code or begin implementation.
+description: Interview the user interactively to reach a shared understanding of a coding or repository task before planning or implementation. Use when requirements are incomplete, ambiguous, risky, or contain meaningful implementation choices. Explore the repository to resolve facts, ask one implementation-relevant decision at a time with a recommended answer, and after explicit user confirmation write a structured discussion artifact under the current branch at .codex-tasks/branches/{branch-key}/{task-id}/discussion.md. After confirmation, return bounded tasks for direct implementation or delegate generation of tickets and a compact execution record for larger or uncertain scopes. Do not modify product code or begin implementation.
 ---
 
 # Task Discussion
@@ -124,7 +124,7 @@ Do not begin implementation planning or implementation during the interview. Aft
 
 Do not create the final artifact until the user explicitly confirms that shared understanding has been reached.
 
-Allowed writes are the confirmed discussion artifact and its parent directory, its resulting recommendation, and generation or alignment of its own tickets after confirmation. Ticket drafting belongs exclusively to the delegated worker. When a confirmed revision becomes bounded, the discussion agent may remove its prior generated tickets as described below. Never modify unrelated task artifacts.
+Allowed writes are the confirmed discussion artifact and its parent directory, its resulting recommendation, and generation or alignment of its own tickets and compact execution record after confirmation. Ticket and execution-record drafting belong exclusively to the delegated worker. When a confirmed revision becomes bounded, the discussion agent may remove its prior generated tickets and record as described below. Never modify unrelated task artifacts.
 
 ## ## Branch, task ID, and artifact path
 
@@ -228,7 +228,7 @@ Write `discussion.md` with this structure:
 
 ## Recommended Next Step
 
-<After the post-confirmation handoff, record the actual result: direct `implement-ticket` invocation using this exact discussion path for a bounded task; the recommended generated ticket path for a completed breakdown; or incomplete generation/alignment and an exact manual `to-tickets` invocation using this discussion path.>
+<After the post-confirmation handoff, record the actual result: direct `implement-ticket` invocation using this exact discussion path for a bounded task; the resulting ticket paths, exact execution.md path, and recommended starting ticket for a completed breakdown; or incomplete ticket/record generation/alignment, known partial/stale paths, and an exact manual `to-tickets` invocation using this discussion path.>
 
 Do not reinterpret confirmed decisions without returning to the user.
 ```
@@ -237,12 +237,12 @@ Use `None` explicitly for empty sections. Do not omit sections silently.
 
 ## Post-confirmation scope assessment and handoff
 
-Confirmation authorizes decomposition within the saved scope and alignment of tickets generated from it, including replacement of edited tickets or statuses and removal of obsolete tickets. No separate breakdown or replacement approval is needed for this automatic handoff. It does not authorize implementation.
+Confirmation authorizes decomposition within the saved scope and alignment of tickets and `execution.md` generated from it, including replacement of edited tickets or statuses and removal of obsolete generated artifacts. The execution record lives beside the discussion and links its source, repository/branch identity, ticket definitions and blockers, progress, and commit references under the `to-tickets` contract. No separate breakdown or replacement approval is needed for this automatic handoff. It does not authorize implementation.
 
 After saving each confirmed discussion or revision:
 
 1. Assess boundedness using the existing `implement-ticket` scope gate and already established findings. Direct implementation is suitable when there is one primary behavioral outcome, clear requirements, one coherent code area, no missing product, architectural, migration, or risk decision, and safe review without decomposition. Multiple independent outcomes, several subsystems, broad refactoring, or more than about five production files for unrelated reasons suggest decomposition. File count is a qualified signal: an explicitly named atomic mechanical change may involve more files.
-2. If clearly bounded, skip `to-tickets`. On a confirmed revision, remove previous generated tickets for this discussion only. Identify them by their source metadata resolving to this exact discussion and the existing numbered ticket format inside this task's `tickets/` directory; never delete unrelated files or the directory wholesale. If ownership is unclear, leave those files untouched and report alignment as incomplete. Return the discussion as the implementation input with a brief boundedness explanation.
+2. If clearly bounded, skip `to-tickets`. On a confirmed revision, remove previous generated tickets for this discussion only. Identify them by their source metadata resolving to this exact discussion and the existing numbered ticket format inside this task's `tickets/` directory. Remove its obsolete `execution.md` only after successful ticket cleanup and when its source, repository, branch scope, and task identity establish ownership. Before ticket cleanup, mark an owned record `incomplete`; if that fails, stop cleanup and report it as stale. Never delete unrelated files or the directory wholesale. If ownership is unclear or cleanup fails, preserve unresolved artifacts and report alignment as incomplete with exact known partial/stale paths, including the execution record. Return the discussion as the implementation input with a brief boundedness explanation.
 3. If decomposition is needed or boundedness is uncertain, explicitly instruct exactly one ticket subagent to apply `to-tickets`. Do not inherit conversation history: use `fork_turns="none"` when available, or an equivalent context-isolated capability. If isolation or delegation is unavailable, use the failure behavior below. An uncertain scope may produce one ticket.
 4. Give the child only the exact saved discussion path, the exact local `to-tickets/SKILL.md` path and instructions to read it, and the automatic invocation contract below. Resolve that skill path from this skill's real filesystem location (following installation symlinks) and its sibling `to-tickets` directory; do not rely on implicit invocation. Keep `allow_implicit_invocation: false` in both skills' metadata.
 5. Consume the compact child result without repeating repository investigation, reviewing the decomposition a second time, or rereading every ticket. Update the discussion's `Recommended Next Step` to reflect the actual result. Never begin implementation.
@@ -256,17 +256,19 @@ The child must:
 - reuse confirmed repository findings and perform only targeted investigation needed for realistic slices;
 - use the existing decomposition logic, decision traceability, self-contained context, and ticket template;
 - skip standalone proposal approval and replacement approval, while retaining unresolved material decisions as blockers;
-- align existing generated tickets with the current confirmed scope, removing obsolete generated tickets only within this discussion's task directory and source-matched generated set; preserve unrelated artifacts;
+- generate and align tickets plus `execution.md` beside the discussion under the `to-tickets` execution-record contract; prepare/check the complete set before alignment and verify metadata against saved tickets;
+- align existing generated artifacts with the current confirmed scope, removing obsolete generated tickets only within this discussion's task directory and source-matched generated set; preserve unrelated artifacts and ambiguously owned execution records;
+- distinguish status-only updates from changed definitions using definition hashes; invalidate obsolete progress on revised definitions or explicitly reconcile it with evidence, never by reused ticket numbers alone;
 - use no subagents and return no full ticket contents;
-- report completion or incomplete generation/alignment, the discussion path, every generated ticket path with a short description and blocking dependencies, immediately available tickets, and the recommended starting ticket; include a concise reason for any blocker or failure.
+- report completion or incomplete ticket/record generation/alignment, the discussion path, every generated ticket path with a short description and blocking dependencies, the exact execution-record path, immediately available tickets, and the recommended starting ticket; include a concise reason for any blocker or failure and exact known partial/stale paths, distinguishing intended paths from saved artifacts.
 
 ### Failure behavior
 
-If delegation is unavailable, lacks context isolation, or fails, preserve the confirmed discussion. Do not generate tickets in the main discussion agent or launch a replacement child. Clearly report ticket generation/alignment as incomplete, including any known partial or stale tickets, and provide the exact recovery command:
+If delegation is unavailable, lacks context isolation, or fails, preserve the confirmed discussion. Do not generate tickets or an execution record in the main discussion agent or launch a replacement child. Clearly report ticket/record generation/alignment as incomplete, including the intended exact execution-record path and any known partial or stale ticket/record paths, and provide the exact recovery command:
 
 `$to-tickets <exact-saved-discussion-path>`
 
-A missing material decision also means the handoff is incomplete: surface the child's specific decision question to the user without silently choosing an answer. A manual retry follows standalone `to-tickets` approval rules. Do not imply that existing tickets are fully aligned when the child did not confirm completion.
+A missing material decision also means the handoff is incomplete: surface the child's specific decision question to the user without silently choosing an answer. A manual retry follows standalone `to-tickets` approval rules. Do not imply that existing tickets or execution progress are fully aligned when the child did not confirm completion.
 
 ## Completion response
 
@@ -274,7 +276,7 @@ After the handoff:
 
 - report the exact discussion artifact path;
 - for a bounded task, briefly explain suitability for direct implementation and provide `$implement-ticket implement <exact-discussion-path>`;
-- for completed decomposition, list every ticket path with a short description and blocking dependencies, identify immediately available tickets, and recommend the starting ticket;
-- for incomplete generation or alignment, report the blocker and exact manual recovery invocation;
+- for completed decomposition, list every ticket path with a short description and blocking dependencies, report the exact execution-record path, identify immediately available tickets, and recommend the starting ticket;
+- for incomplete ticket/record generation or alignment, report the blocker, intended execution-record path, exact known partial/stale paths, and exact manual recovery invocation;
 - state that no implementation changes were made;
 - stop; implementation requires a separate explicit user request.

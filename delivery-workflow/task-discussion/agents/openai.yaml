@@ -1,6 +1,6 @@
 interface:
   display_name: "01 - Task Discussion"
-  short_description: "Confirm tasks; hand off bounded work or generate tickets"
+  short_description: "Confirm tasks; hand off work or tickets and execution record"
 
 policy:
   # Automatic handoff is explicitly instructed; implicit invocation stays disabled.
