@@ -1,0 +1,7 @@
+interface:
+  display_name: "04 - Implement Discussion"
+  short_description: "Implement approved tickets sequentially with local commits"
+
+policy:
+  # Discussion confirmation and decomposition never authorize implementation.
+  allow_implicit_invocation: false

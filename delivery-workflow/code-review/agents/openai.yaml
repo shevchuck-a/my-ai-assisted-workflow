@@ -1,5 +1,5 @@
 interface:
-  display_name: "04 - Code Review"
+  display_name: "05 - Code Review"
   short_description: "Review diffs and pull requests independently"
 
 policy:
