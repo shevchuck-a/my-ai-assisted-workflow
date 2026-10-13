@@ -56,6 +56,26 @@ successful commit. Discussion and ticket specifications stay unchanged.
 `.codex-tasks/` is ignored local progress; actual Git commits supply independent
 implementation evidence. Neither flow authorizes remote Git operations or review.
 
+Orchestration preserves the same lifecycle-running child and execution
+`in-progress` through silence, wait timeouts, elapsed time, absent replies, or
+unchanged files. Parent and child share compact stage changes and long-check
+start/end updates, including observed times and known active check/process or
+session identity. Pending tool calls may delay replies; no strict heartbeat is
+required. The parent ordinarily waits up to 60 seconds per call, keeps user
+updates concise, and avoids repeated nudges, short wait/sleep loops, and full logs.
+
+After five minutes without observable progress, the parent asks once whether to
+keep waiting or interrupt. Actual progress resets the inactivity interval; the
+threshold is a notification, never a ticket deadline. An unanswered choice keeps
+the same child and `in-progress` without repeated prompts. Choosing to wait starts
+a new full five-minute notification interval from that answer or later progress,
+without granting future cancellation authority. Only an actual interrupt choice
+or applicable stop request authorizes interruption. Further launches stop, and a
+stopped claim requires lifecycle confirmation; an unconfirmed stop retains
+`in-progress` with advancement prevented. Confirmed interruption records `blocked`
+and the observed stage/outcome, preserves edits, and requires explicit recovery
+without guessing the cause of silence.
+
 If the execution record is missing, orchestration waits for a choice between
 explicitly authorizing parent creation from existing ticket metadata and
 addressing `to-tickets` first. Failures stop further implementation and preserve

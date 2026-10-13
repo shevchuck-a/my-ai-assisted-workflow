@@ -149,7 +149,42 @@ diffs/logs, or duplicate repository investigation. The child reads its own ticke
 and applicable instructions, and uses selective source lookup under its skill.
 Wait for this child's final result and termination before any next launch. Do
 not start another child while it is waiting, correcting, blocked, or interrupted.
-Keep the user informed while waiting; waiting itself never supplies approval.
+
+Observe the same child using only lifecycle/activity capabilities exposed by the
+client. A wait timeout, silence, elapsed time, an absent reply, or unchanged files
+alone establishes neither failure nor blocking. While its lifecycle remains
+running, retain that child and execution `in-progress`; never interrupt or launch
+another child on those grounds. If lifecycle cannot be established, report the
+uncertainty and do not infer termination or launch a replacement.
+
+Track actual elapsed time since the last observable progress, starting at launch
+until progress is observed. Compact stage changes, long-check start/end updates,
+or exposed activity that demonstrates advancement are progress; repeated running
+status and wait timeouts are not. Retain the observed time, stage, active check,
+and process/session identity when available. Reset the inactivity interval on
+actual progress, whether it arrives before or after the notification threshold;
+do not estimate elapsed time from poll counts.
+
+After five minutes without observable progress, ask the user once whether to
+keep waiting (recommended while the child is running) or interrupt. Five minutes
+is a notification threshold, never a ticket deadline. While that decision is
+unanswered, keep the same child and `in-progress`, continue observing, and do not
+repeat the unresolved request. Progress may be reported while the answer remains
+pending; neither progress nor silence supplies interruption authority. An actual
+choice to continue waiting keeps the same child active and starts a new full
+five-minute notification interval from that answer, or later observable progress.
+It grants no future cancellation authority. An interrupt choice follows the
+confirmed-stop contract below; an independently established terminal outcome
+instead follows the ordinary completion or failure contract.
+
+Ordinarily wait up to 60 seconds per call using the exposed waiting capability,
+and keep concise user visibility within the environment's update requirements.
+Report meaningful stage changes and long-check start/end information economically,
+including the known active check and process/session identity. Pending tool calls
+may delay child message processing; require neither an immediate reply nor a
+strict heartbeat. Avoid redundant status nudges, alternating short waits and
+sleeps, repeated context loading, and full logs/diffs. Waiting itself never
+supplies approval.
 
 Preserve the child's bounded correction and test-first rules. Meaningful expected
 RED and correctable verification failures are intermediate outcomes, not ultimate
@@ -208,10 +243,17 @@ for API/UI/E2E/integration tests, services, browsers, and external systems.
 Generic verification wording and local commit authority do not authorize them.
 Code review remains a separate manually requested workflow.
 
-On interruption or a stop request, prevent further launches and contact/interrupt
-the sole child as needed to honor the request. Do not declare quiescence until
-its lifecycle confirms it has stopped. Preserve partial edits and evidence;
-never assume an interrupted child left a clean tree.
+Interrupt only on the user's actual interrupt choice or an applicable stop
+request. Prevent further launches and contact/interrupt the sole child as needed
+to honor that choice or request. Do not declare quiescence until its lifecycle
+confirms it has stopped; if confirmation is unavailable, report the stop as
+unconfirmed and retain `in-progress` while preventing advancement. After confirmed
+interruption, record `blocked` and compact evidence of the observed stage, active
+check/process identity when known, user choice or stop request, and confirmed
+lifecycle outcome. Preserve partial edits and evidence; never assume an
+interrupted child left a clean tree or attribute an unproven cause to its silence.
+Confirmed interruption, like terminal failure, requires explicit user-directed
+recovery; no automatic retry, replacement child, skipped failure, or resume.
 
 ### Explicit resume and reconciliation
 
