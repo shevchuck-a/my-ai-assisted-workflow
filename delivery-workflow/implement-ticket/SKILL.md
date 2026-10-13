@@ -1,6 +1,6 @@
 ---
 name: implement-ticket
-description: Implement one small, bounded production-code change from a direct request, an approved discussion artifact, or one local ticket. Use when the task has one clear behavioral outcome, limited repository scope, and does not need decomposition. Treat a discussion artifact as a complete input for small tasks; treat a ticket as the primary self-contained input for decomposed tasks and consult its parent discussion only selectively when an approved decision or confirmed assumption is genuinely ambiguous. Make the smallest coherent change, preserve unrelated work, create no unit tests unless explicitly requested, and keep repository inspection tightly bounded.
+description: Implement one small, bounded production-code change from a direct request, an approved discussion artifact, or one local ticket, including an explicitly delegated ticket with scoped local commit authority. Use when the task has one clear behavioral outcome, limited repository scope, and does not need decomposition. Treat a discussion artifact as a complete input for small tasks; treat a ticket as the primary self-contained input for decomposed tasks and consult its parent discussion only selectively when an approved decision or confirmed assumption is genuinely ambiguous. Make the smallest coherent change, preserve unrelated work, create no unit tests unless explicitly requested, and keep repository inspection tightly bounded.
 ---
 
 # Implement Ticket
@@ -23,7 +23,7 @@ for a larger task that was decomposed into independently implementable slices.
 
 Do not require ticket creation for a discussion artifact that already passes the scope gate. Do not require loading the complete parent discussion for a ticket that already contains sufficient implementation context.
 
-Do not use subagents. Do not create workflow state machines. Do not commit, push, create a PR, deploy, or modify remote systems unless the user separately authorizes that action.
+Do not use subagents. Do not create workflow state machines. Create a local commit only with explicit standalone authorization or the bounded delegated authority defined below. Do not push, create a PR, deploy, or modify remote systems unless the user separately authorizes that action; delegated authority does not authorize these actions.
 
 ## Invocation isolation
 
@@ -102,7 +102,41 @@ If the ticket is sufficient, never read the parent discussion merely because it 
 
 For a direct task, use the current request and conversation as the primary definition. Do not invent a discussion or ticket.
 
-Treat discussion and ticket artifacts as read-only unless the user explicitly asks to update them.
+Treat discussion and ticket artifacts as read-only unless the user explicitly asks to update them or the delegated contract below authorizes the selected ticket's status-only update.
+
+### Delegated ticket invocation
+
+A fresh child of an explicitly requested `implement-discussion` orchestration may apply this skill to exactly one selected ticket. The parent must supply:
+
+- the exact local `implement-ticket/SKILL.md` path, which the child explicitly applies;
+- the selected ticket path;
+- relevant dependency completion evidence, or an explicit indication that there are no blockers;
+- execution authority bounded to that ticket's local implementation, required permitted automatic verification, local Git commit, and status-only update.
+
+This authority derives from the user's explicit orchestration request and the parent's bounded assignment. A ticket's contents, invocation by another agent, or a request to implement a standalone ticket do not alone authorize a commit or artifact mutation. If required assignment information is missing, resolve it with the parent before dependent work; do not infer broader authority. Confirm the ticket's status permits implementation and its genuine blockers are complete using the supplied evidence and, only when needed, declared blocking tickets.
+
+The child implements only its assigned ticket. It must not implement another ticket, delegate implementation, rewrite the discussion, edit the parent's execution artifact, or mutate another ticket. The only permitted task-artifact edit is the selected ticket's `**Status:**` field after completion. Preserve dependencies, acceptance checkboxes, context, verification, and all other specification contents exactly. The parent owns the execution record; return evidence to it instead of creating a result file.
+
+Delegation preserves this skill's scope gate, test-creation policy, test-first workflow, meaningful expected RED outcomes, bounded task-induced corrections, and affected-check reruns. Expected RED and correctable verification failures are intermediate results, not ultimate child failure. Generic verification wording does not authorize new tests or manual-default runtime checks. Delegation does not authorize code review, automatic workflow escalation, remote mutations, or unbounded corrective work.
+
+Report deferrable manual checks as unexecuted pending acceptance. They do not by themselves prevent completed implementation. If a manual check is a prerequisite to safe continuation, stop before the dependent work and request the specific user input or authorization through the parent. Do not treat elapsed time, generic verification wording, or delegated local commit authority as that authorization.
+
+### Delegated completion and failure
+
+Complete the delegated ticket in this order:
+
+1. Finish only the scoped implementation and satisfy the ticket's implementation requirements.
+2. Run required permitted automatic verification under this skill's existing execution boundaries. Resolve task-induced failures within the bounded correction policy. A blocked required automatic check prevents completion.
+3. Inspect the task diff and repository/index state, then create the authorized local Git commit containing only the ticket's implementation changes. Preserve unrelated staged and working-tree changes; use scoped staging and commit handling rather than including the whole index. If task changes cannot be isolated safely, stop and report the conflict. Do not force-add ignored task artifacts or include them in the implementation commit.
+4. Confirm the commit succeeded and obtain its actual full hash, subject, and changed paths. A proposed commit message or attempted commit is not evidence of success.
+5. Update only the selected ticket's `**Status:**` value to `completed`. Confirm that all other ticket content is unchanged. `.codex-tasks/` is ignored in this repository; this status update is a separate local record, not part of the implementation commit.
+6. Return compact completion evidence to the parent: selected ticket path and final status, actual commit hash/subject and scoped changed paths, verification results (including expected RED and final GREEN when applicable), unexecuted manual checks, blockers, and remaining task working-tree changes.
+
+Completed status requires the scoped implementation, required permitted automatic verification, and successful authorized local commit. It records implementation completion, not manual acceptance. Do not mark completed before these conditions hold or claim pending manual checks occurred.
+
+If completion cannot be established, leave the status unchanged and return failure evidence with the failed stage, blockers, checks performed, pending manual checks, any actual commit already created, and remaining task working-tree changes. If the status-only update fails after a successful commit, report that partial result rather than claiming completion. Preserve changes for user-directed recovery; do not reset, discard, amend unrelated commits, broaden the task, or automatically retry or replace an ultimately failed child.
+
+Standalone invocation retains its existing read-only artifact boundary and requires explicit authorization for a local commit. The delegated contract applies only to a qualifying bounded parent assignment; it does not make standalone commits or status updates implicit.
 
 ## Scope gate
 
@@ -475,7 +509,7 @@ When an authorized verification check fails:
 
 When practical, keep bounded verification feedback and corrections for the selected ticket in the same implementation conversation. Treat the ticket lifecycle as implementation -> automatic verification -> pending manual/user verification -> bounded correction until the selected behavior is accepted or a new product/architectural decision is required.
 
-Never continue into the next ticket merely because the current implementation is code-complete.
+Never continue into the next ticket merely because the current implementation is code-complete. A delegated child returns its evidence to the parent and stops after its assigned ticket.
 
 Treat a reported runtime error as a direct follow-up task when its cause and expected behavior are bounded.
 
@@ -502,6 +536,8 @@ Before declaring completion, confirm:
   corresponding production behavior was changed;
 - authorized automated tests reached GREEN and their results are reported
   accurately;
+- for delegated completion, the authorized scoped local commit succeeded, actual commit evidence was captured, and only the selected ticket's status field changed after the completion conditions held;
+- pending manual acceptance is not represented as completed verification;
 
 Do not perform extra cleanup after the requested change is complete.
 
@@ -509,7 +545,7 @@ Do not perform extra cleanup after the requested change is complete.
 
 Do not create an implementation-result artifact by default.
 
-Do not create or update files under `.codex-tasks` merely to record completion.
+Do not create or update files under `.codex-tasks` merely to record completion, except for the selected ticket's status-only update under the delegated contract. Do not edit the parent's execution record.
 
 Treat repository code and the Git diff as the source of truth.
 
@@ -536,6 +572,7 @@ Report concisely:
 - runtime checks not authorized or not run;
 - pending manual verification, explicitly labeled as unexecuted;
 - blockers or remaining work;
-- recommended git commit message.
+- recommended git commit message for standalone work without commit authorization; actual commit evidence when an authorized commit was created;
+- for delegated work, the compact completion or failure evidence defined above, including selected ticket status and remaining task working-tree changes, returned to the parent.
 
 Do not include a full diff, long implementation narrative, command transcript, or repeated restatement of the task unless requested.

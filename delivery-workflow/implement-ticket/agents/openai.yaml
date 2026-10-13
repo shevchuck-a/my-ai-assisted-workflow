@@ -1,6 +1,6 @@
 interface:
   display_name: "03 - Implement Ticket"
-  short_description: "Implement one approved local ticket cleanly and verify it"
+  short_description: "Implement a ticket; commit when explicitly authorized"
   
 policy:
   allow_implicit_invocation: false
