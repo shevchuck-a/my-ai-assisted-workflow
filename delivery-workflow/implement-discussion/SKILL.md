@@ -85,6 +85,10 @@ Alignment must be `complete`. Progress values are `pending`, `in-progress`,
 Preserve source, identities, hashes, paths, and blockers during implementation.
 Use reconciliation evidence for compact checks, failure stage, blockers, remaining
 changes, and unexecuted manual checks, not duplicated implementation context.
+For each exempted baseline error, retain the check, concise diagnostic, affected
+files, proof of pre-existence and baseline equivalence, and why the required
+ticket behavior remains verifiable. Use this existing column; add no schema or
+detailed error artifact.
 
 Before launch, and again before advancing after a child, check:
 
@@ -207,15 +211,20 @@ Then independently check concise actual evidence:
    and working-tree changes; task artifacts must not be force-added or substitute
    for the implementation commit. Any unexplained inclusion or remaining task
    implementation changes blocks completion. Avoid full logs or repository diffs.
-3. Confirm required permitted automatic checks succeeded from the child's compact
-   results. Distinguish task failures, unrelated failures, environment blockers,
-   expected RED, and final GREEN. A blocked required check prevents completion.
+3. Confirm required permitted automatic checks ran and their actual outcomes
+   satisfy the ticket. Checks must pass except for failures meeting every
+   condition in `Baseline failure exemption` below. Assess the child's compact
+   baseline proof and behavior-verification evidence before accepting an
+   exemption. Distinguish task failures, unrelated baseline failures, environment
+   blockers, expected RED, and final GREEN. A blocked required check prevents
+   completion; expected RED and bounded corrections remain intermediate results.
 4. Confirm this ticket now has status `completed` and its definition hash is
    unchanged. Confirm discussion and all other ticket contents/statuses remain
    unchanged using mechanical comparisons against intake snapshots. Revalidate
    the scheduling metadata; unexpected shared-state changes stop advancement.
 5. Only then write parent progress `completed`, actual commit refs, and compact
-   reconciliation/verification evidence with pending manual acceptance. Confirm
+   reconciliation/verification evidence, including each exempted baseline error
+   and pending manual acceptance. Confirm
    the record was saved. If recording fails, stop; report the verified commit and
    status as an interrupted partial result rather than advancing without a record.
 
@@ -223,6 +232,35 @@ Ignored `.codex-tasks` artifacts record local progress, not independent Git proo
 Do not record completion merely from a child's claim, ticket status, attempted
 commit, suggested subject, or ignored artifact. Capture actual evidence before
 marking progress or declaring the set implemented.
+
+### Baseline failure exemption
+
+An already-authorized scoped commit and completion may coexist with unrelated
+pre-existing failures only when required permitted checks ran, evidence proves
+the failures predate the ticket and are unrelated to its changes, and the
+required ticket behavior is verified. An explicit clean-check requirement
+remains binding. Confirm baseline equivalence for the failing check: identify
+the relevant pre-ticket revision/state, command and scope, inputs, and environment,
+and show the same relevant diagnostic under equivalent conditions. Explain why
+the ticket changes neither cause the failure nor obscure verification of its
+required behavior. A merely plausible existing failure, historical unverified
+report, or unchanged affected paths alone is insufficient proof.
+
+Obtain and assess evidence only within existing inspection/execution permissions.
+Do not change production code to manufacture a baseline, repair unrelated errors,
+weaken tests, or expand verification authority. Task regressions require bounded
+correction or stopping. Uncertain attribution, environment/permission blockers,
+unavailable required verification, baseline errors masking required behavior,
+and unmet explicit clean-check requirements prevent completion and advancement.
+Preserve manual acceptance/prerequisite gates and all independent Git, scope,
+status, definition-hash, and ownership checks.
+
+Retain each exempted check's concise diagnostic, affected files, baseline proof,
+and behavior-verification assessment in `execution.md` and final output. Report
+actual outcomes; a completed result with residual errors must never claim all
+checks passed. Suggest follow-up tickets only; do not create or implement them,
+repair unrelated errors, replan, invoke decomposition/review, or create another
+detailed error artifact.
 
 ## Failures, manual checks, and interruption
 
@@ -263,8 +301,11 @@ alignment, definitions, dependencies, source approval, and repository/index stat
 before selecting anything. Reconcile commit, status, and progress separately:
 
 - Matching completed status, unchanged definition, and verified scoped commit
-  evidence may reconcile a pending/in-progress row to `completed` without
-  reimplementation. Record how the missing parent update was established.
+  and required verification evidence may reconcile a pending/in-progress row to
+  `completed` without reimplementation. Apply the same baseline failure exemption
+  and retain each error's proof and relevance assessment; missing or unproven
+  exemption evidence prevents reconciliation. Record how the missing parent
+  update was established.
 - A commit with a still-ready status is an interrupted status update, not a new
   pending implementation. The parent cannot edit ticket status. Stop and request
   the specific user-directed status-only recovery after proving the commit and
@@ -281,7 +322,8 @@ before selecting anything. Reconcile commit, status, and progress separately:
   prerequisite whose completion is stale. No automatic replanning/decomposition.
 
 Validate existing completed rows' actual commits and recorded verification before
-using them as blockers' completion evidence. A lost record or missing child
+using them as blockers' completion evidence, including the complete evidence for
+each exempted baseline error under the same completion gate. A lost record or missing child
 outcome cannot be repaired by trusting statuses alone. If compact retained
 evidence cannot establish the required facts, ask instead of guessing.
 
@@ -294,3 +336,7 @@ partial progress, and remaining task changes when applicable. Distinguish full
 implementation from pending manual acceptance; do not claim review or runtime
 checks occurred when they did not. Keep the handoff compact and provide the
 specific next user action only when a gate or recovery is required.
+For every exempted baseline error, include the check, concise diagnostic, affected
+files, baseline-equivalence proof, and why required ticket behavior was verified.
+State residual errors visibly without claiming all checks passed, and suggest
+follow-up tickets only; do not create or implement them or expand the workflow.

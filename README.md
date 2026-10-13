@@ -56,6 +56,29 @@ successful commit. Discussion and ticket specifications stay unchanged.
 `.codex-tasks/` is ignored local progress; actual Git commits supply independent
 implementation evidence. Neither flow authorizes remote Git operations or review.
 
+Required permitted checks must run. Completion and an already-authorized scoped
+commit may coexist with proven unrelated pre-existing failures only when the
+required ticket behavior remains verified and no explicit clean-check requirement
+is unmet. Evidence must establish pre-existence, unrelatedness, and baseline
+equivalence: the same relevant diagnostic at an identified pre-ticket revision/state
+with equivalent command/scope, inputs, and environment. Historical unverified
+reports or unchanged affected paths alone are insufficient. Uncertain attribution,
+environment/permission blockers, unavailable required verification, and baseline
+errors masking required behavior prevent completion. Task regressions still
+require bounded correction or stopping; expected TDD RED is intermediate and
+required behavior checks must reach GREEN when test-first applies.
+
+Collect baseline evidence within existing permissions, without modifying production
+code to manufacture a baseline, repairing unrelated errors, or weakening tests.
+Child completion evidence, the parent's existing `execution.md` reconciliation
+field, reconciliation of completed rows, and final reports retain each exempted
+check's concise diagnostic, affected files, baseline proof, and why required
+behavior remains verified. Report residual errors visibly; never claim all checks
+passed. Suggest follow-up tickets only, without automatic creation/implementation,
+unrelated repairs, replanning, decomposition/review, or detailed error artifacts.
+Commit/scope/status validation, definition hashes, ownership, manual gates, and
+explicit recovery boundaries remain binding; this exception grants no new authority.
+
 Orchestration preserves the same lifecycle-running child and execution
 `in-progress` through silence, wait timeouts, elapsed time, absent replies, or
 unchanged files. Parent and child share compact stage changes and long-check

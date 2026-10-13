@@ -128,13 +128,13 @@ Report deferrable manual checks as unexecuted pending acceptance. They do not by
 Complete the delegated ticket in this order:
 
 1. Finish only the scoped implementation and satisfy the ticket's implementation requirements.
-2. Run required permitted automatic verification under this skill's existing execution boundaries. Resolve task-induced failures within the bounded correction policy. A blocked required automatic check prevents completion.
+2. Run required permitted automatic verification under this skill's existing execution boundaries. Resolve task-induced failures within the bounded correction policy. Checks must pass except for failures satisfying every condition in `Proven unrelated baseline failures` below, with required ticket behavior verified and no unmet explicit clean-check requirement. A blocked required automatic check prevents completion.
 3. Inspect the task diff and repository/index state, then create the authorized local Git commit containing only the ticket's implementation changes. Preserve unrelated staged and working-tree changes; use scoped staging and commit handling rather than including the whole index. If task changes cannot be isolated safely, stop and report the conflict. Do not force-add ignored task artifacts or include them in the implementation commit.
 4. Confirm the commit succeeded and obtain its actual full hash, subject, and changed paths. A proposed commit message or attempted commit is not evidence of success.
 5. Update only the selected ticket's `**Status:**` value to `completed`. Confirm that all other ticket content is unchanged. `.codex-tasks/` is ignored in this repository; this status update is a separate local record, not part of the implementation commit.
-6. Return compact completion evidence to the parent: selected ticket path and final status, actual commit hash/subject and scoped changed paths, verification results (including expected RED and final GREEN when applicable), unexecuted manual checks, blockers, and remaining task working-tree changes.
+6. Return compact completion evidence to the parent: selected ticket path and final status, actual commit hash/subject and scoped changed paths, actual verification results (including expected RED and final GREEN when applicable), each exempted baseline error's check, concise diagnostic, affected files, proof of pre-existence/baseline equivalence, and why required ticket behavior remains verified, unexecuted manual checks, blockers, and remaining task working-tree changes. Report residual errors visibly and suggest follow-up tickets only; do not claim all checks passed.
 
-Completed status requires the scoped implementation, required permitted automatic verification, and successful authorized local commit. It records implementation completion, not manual acceptance. Do not mark completed before these conditions hold or claim pending manual checks occurred.
+Completed status requires the scoped implementation, required permitted automatic verification satisfying the gate above, and successful authorized local commit. Proven unrelated baseline failures permit an already-authorized scoped commit and completion only under that gate; they grant no new commit authority. It records implementation completion, not manual acceptance. Do not mark completed before these conditions hold or claim pending manual checks occurred.
 
 If completion cannot be established, leave the status unchanged and return failure evidence with the failed stage, blockers, checks performed, pending manual checks, any actual commit already created, and remaining task working-tree changes. For an interruption, include the last observed stage, active check/process identity when known, and confirmed lifecycle outcome when available; do not claim a stopped state without confirmation or an unproven failure cause. Silence or a wait timeout alone is not such a failure result. If the status-only update fails after a successful commit, report that partial result rather than claiming completion. Preserve changes for user-directed recovery; do not reset, discard, amend unrelated commits, broaden the task, or automatically retry or replace an ultimately failed child.
 
@@ -503,9 +503,46 @@ When an authorized verification check fails:
   failures;
 - fix regressions caused by the current task;
 - rerun affected checks after bounded corrections, including static-check failures;
-- report unrelated pre-existing failures without expanding scope;
+- assess unrelated pre-existing failures under `Proven unrelated baseline failures` below and report actual outcomes without expanding scope;
 - report environment or permission blockers and pending manual verification;
 - do not weaken or suppress tests merely to obtain GREEN.
+
+### Proven unrelated baseline failures
+
+Required permitted checks must run. An unrelated pre-existing failure may coexist
+with completion and an already-authorized scoped commit only when evidence proves
+it predates the ticket, is unrelated to its changes, and does not prevent
+verification of the required ticket behavior. Required behavior checks must
+establish that behavior; any explicit clean-check requirement remains binding.
+
+For each proposed exemption, identify the relevant pre-ticket revision/state,
+failing command and scope, inputs, and environment. Establish baseline equivalence
+by showing the same relevant diagnostic under equivalent conditions and explain
+why the ticket changes neither cause it nor mask required behavior verification.
+A failure that merely looks existing, a historical report without baseline
+equivalence, or unchanged affected paths alone is insufficient proof. If proof
+is insufficient, stop rather than guess.
+
+Collect relevant baseline evidence only within existing inspection/execution
+permissions. Do not modify production code to manufacture a baseline, repair
+unrelated errors, weaken tests, or expand verification authority. Task regressions
+remain subject to bounded correction or stopping. Uncertain origin, environment
+or permission blockers, unavailable required verification, baseline errors masking
+required behavior, and unmet explicit clean-check requirements prevent completion.
+Expected TDD RED and correctable task failures remain intermediate outcomes;
+required behavior must reach GREEN when test-first applies. Deferrable manual
+acceptance remains unexecuted pending acceptance; manual prerequisites still stop
+dependent work until the required input or task-specific authorization arrives.
+
+Return each exempted error's check, concise diagnostic, affected files, proof of
+pre-existence/baseline equivalence, and why required ticket behavior remains
+verified. The parent retains this compact evidence in the existing `execution.md`
+reconciliation field; include it in final output as well. Do not create another
+detailed error artifact or edit the parent's record. A completed result with
+residual errors must never claim all checks passed. Suggest follow-up tickets
+only; do not create or implement them, repair unrelated failures, replan, or invoke
+decomposition/review. Preserve scoped successful commit evidence, status-only
+ticket mutation, unchanged specification hashes, and explicit recovery boundaries.
 
 ## Follow-up fixes
 
@@ -530,14 +567,14 @@ Before declaring completion, confirm:
 - only intended files and areas changed;
 - unrelated user changes remain preserved;
 - static-check results are reported accurately;
-- required automatic checks ran, or their failures and blockers are explicitly reported;
+- required automatic checks ran and satisfy the completion gate; each exempted baseline failure has complete proof and relevance evidence, and other failures/blockers prevent a completion claim;
 - authorized automated test execution is reported accurately, and other runtime checks are reported as not run unless separately authorized;
 - no secrets, generated junk, debug output, or unrelated cleanup were added;
 - the design remains proportional to the task.
 - when test-first development applied, RED was established before the
   corresponding production behavior was changed;
-- authorized automated tests reached GREEN and their results are reported
-  accurately;
+- authorized behavior tests reached GREEN when required; report all actual test
+  results accurately, including any separately proven unrelated baseline failures;
 - for delegated completion, the authorized scoped local commit succeeded, actual commit evidence was captured, and only the selected ticket's status field changed after the completion conditions held;
 - pending manual acceptance is not represented as completed verification;
 
@@ -571,6 +608,7 @@ Report concisely:
 - the corresponding GREEN result;
 - final automated and static checks performed and their results;
 - distinguish task-induced failures, unrelated failures, and environment or permission blockers;
+- for each exempted baseline error, report the check, concise diagnostic, affected files, proof of pre-existence/baseline equivalence, and why required ticket behavior remains verified; state residual errors visibly without claiming all checks passed, and suggest follow-up tickets only;
 - runtime checks not authorized or not run;
 - pending manual verification, explicitly labeled as unexecuted;
 - blockers or remaining work;
